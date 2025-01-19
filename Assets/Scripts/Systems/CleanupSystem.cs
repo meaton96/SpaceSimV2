@@ -64,33 +64,33 @@ public partial struct CleanupSystem : ISystem {
     [BurstCompile]
     public void CheckForDeletions(ref SystemState state) {
         var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-       // Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
+        Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
         //int[] entityChanges = new int[4];
-        //EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
+        EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
         foreach (var (annihilateEnabled, type, entity) in
                  SystemAPI.Query<EnabledRefRO<Annihilate>, RefRO<TypeComponent>>().WithEntityAccess()) {
             if (annihilateEnabled.ValueRO) {
                 switch ((int)type.ValueRO.type) {
                     case 0:
-                       // counter.TypeOneCount--;
+                        counter.TypeOneCount--;
                         break;
                     case 1:
-                       // counter.TypeTwoCount--;
+                        counter.TypeTwoCount--;
                         break;
                     case 2:
-                       // counter.TypeThreeCount--;
+                        counter.TypeThreeCount--;
                         break;
                     case 3:
-                     //   counter.TypeFourCount--;
+                        counter.TypeFourCount--;
                         break;
                     default:
                         break;
                 }
-              //  counter.totalDestroyed++;
+                counter.totalDestroyed++;
                 commandBuffer.DestroyEntity(entity);
             }
         }
-       // commandBuffer.SetComponent(entityCounter, counter);
+        commandBuffer.SetComponent(entityCounter, counter);
         commandBuffer.Playback(state.EntityManager);
     }
 

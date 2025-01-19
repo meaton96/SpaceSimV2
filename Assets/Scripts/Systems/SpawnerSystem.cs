@@ -204,33 +204,33 @@ public partial class SpawnerSystem : SystemBase {
     [BurstCompile]
     private void UpdateEntityCounter(int index, bool collisionSpawn, EntityCommandBuffer commandBuffer) {
 
-        //Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
+        Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
 
-        //EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
-        //switch (index) {
-        //    case 0:
-        //        counter.TypeOneCount++;
-        //        break;
-        //    case 1:
-        //        counter.TypeTwoCount++;
-        //        break;
-        //    case 2:
-        //        counter.TypeThreeCount++;
-        //        break;
-        //    case 3:
-        //        counter.TypeFourCount++;
-        //        break;
-        //    default:
-        //        break;
+        EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
+        switch (index) {
+            case 0:
+                counter.TypeOneCount++;
+                break;
+            case 1:
+                counter.TypeTwoCount++;
+                break;
+            case 2:
+                counter.TypeThreeCount++;
+                break;
+            case 3:
+                counter.TypeFourCount++;
+                break;
+            default:
+                break;
 
-        //}
-        //if (collisionSpawn) {
-        //    counter.totalSpawnedByCollisions++;
-        //}
-        //else {
-        //    counter.totalSpawnedBySimulator++;
-        //}
-        //commandBuffer.SetComponent(entityCounter, counter);
+        }
+        if (collisionSpawn) {
+            counter.totalSpawnedByCollisions++;
+        }
+        else {
+            counter.totalSpawnedBySimulator++;
+        }
+        commandBuffer.SetComponent(entityCounter, counter);
     }
 
     //spawns the passed in entity using the provided command buffer
