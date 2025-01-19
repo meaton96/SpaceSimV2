@@ -14,8 +14,8 @@ partial struct CreateSingletonSystem : ISystem {
             EntityManager entityManager = state.EntityManager;
             Entity entity = entityManager.CreateEntity();
             entityManager.AddComponentData(entity, new BoundarySettings {
-                boundaryX = 5,
-                boundaryY = 5,
+                boundaryX = 1000,
+                boundaryY = 500,
                 boundaryZ = 1
             });
         }
