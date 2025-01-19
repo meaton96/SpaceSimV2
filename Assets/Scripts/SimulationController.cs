@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class SimulationController : MonoBehaviour {
-   // private SpawnerSystem spawnerSystem;
+    private SpawnerSystem spawnerSystem;
     private EntityManager entityManager;
     private Entity spawnDataEntity;
     private bool hasInit = false;
@@ -28,6 +28,14 @@ public class SimulationController : MonoBehaviour {
 
     [SerializeField]
     private TextMeshProUGUI[] spawnRateTexts = new TextMeshProUGUI[4];
+
+    [SerializeField]
+    private TextMeshProUGUI pauseText;
+
+    private bool isPaused = false;
+    private World defaultWorld;
+    private SimulationSystemGroup simulationSystemGroup;
+
     private void Awake() {
         Instance = this;
     }
@@ -49,8 +57,10 @@ public class SimulationController : MonoBehaviour {
         //}
     }
     public void Init() {
-      //  spawnerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SpawnerSystem>();
+        spawnerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SpawnerSystem>();
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        defaultWorld = World.DefaultGameObjectInjectionWorld;
+        simulationSystemGroup = defaultWorld.GetExistingSystemManaged<SimulationSystemGroup>();
         spawnDataEntity = entityManager.CreateEntityQuery(typeof(AutoSpawnData)).GetSingletonEntity();
 
         //get initial data
@@ -119,7 +129,13 @@ public class SimulationController : MonoBehaviour {
     }
 
     public void Spawn(int index) {
-       // spawnerSystem.Spawn(index);
+        spawnerSystem.Spawn(index);
+    }
+    public void ToggleSimulation() {
+        isPaused = !isPaused;
+        simulationSystemGroup.Enabled = !isPaused;
+        pauseText.text = isPaused ? "Resume" : "Pause";
+
     }
     public void ChangeAutoSpawn(int index) {
         spawnFlags[index] = !spawnFlags[index];
