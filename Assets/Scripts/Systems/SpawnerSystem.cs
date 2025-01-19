@@ -17,8 +17,8 @@ using Unity.Collections;
 [BurstCompile]
 public partial class SpawnerSystem : SystemBase {
 
-    //private BoundarySettings cachedBounds;
-    //private bool boundsInitialized;
+    private BoundarySettings cachedBounds;
+    private bool boundsInitialized;
 
     //private AutoSpawnData autoSpawnData;
     //private bool autoSpawnInitialized;
@@ -48,12 +48,12 @@ public partial class SpawnerSystem : SystemBase {
             Spawn(3);
         }
 
-        //if (!boundsInitialized) {
-        //    cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
-        //    boundsInitialized = true;
-        //}
+        if (!boundsInitialized) {
+            cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
+            boundsInitialized = true;
+        }
 
-         HandleSpawnQueue();
+        HandleSpawnQueue();
         //  HandleAutoSpawn(SystemAPI.Time.DeltaTime);
 
 
@@ -246,8 +246,8 @@ public partial class SpawnerSystem : SystemBase {
 
         //set the position of the spawned entity to a random position
         float3 randomPosition = new float3(
-            UnityEngine.Random.Range(-5f, 5f),
-            UnityEngine.Random.Range(-5f, 5f),
+            UnityEngine.Random.Range(-cachedBounds.boundaryX, cachedBounds.boundaryX),
+            UnityEngine.Random.Range(-cachedBounds.boundaryY, cachedBounds.boundaryY),
             0f
         );
 

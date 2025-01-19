@@ -10,32 +10,30 @@ using Unity.Physics;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct HandleObjectSystem : ISystem {
 
-    // private BoundarySettings cachedBounds;
+     private BoundarySettings cachedBounds;
     private bool boundsInitialized;
 
     
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
-        //if (!boundsInitialized) {
+        if (!boundsInitialized) {
 
 
-        //    //Debug.Log($"Entity Exists: {SystemAPI.HasSingleton<BoundarySettings>()}");
+            //Debug.Log($"Entity Exists: {SystemAPI.HasSingleton<BoundarySettings>()}");
 
-        //    //cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
-        //    boundsInitialized = true;
+            cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
+            boundsInitialized = true;
 
-        //    if (boundsInitialized) {
-        //        Debug.Log($"Bounds initialized: X={cachedBounds.boundaryX}, Y={cachedBounds.boundaryY}, Z={cachedBounds.boundaryZ}");
-        //    }
-        //}
-
-
+            if (boundsInitialized) {
+                Debug.Log($"Bounds initialized: X={cachedBounds.boundaryX}, Y={cachedBounds.boundaryY}, Z={cachedBounds.boundaryZ}");
+            }
+        }
 
 
-        float boundaryX = 5f;
-        float boundaryY = 5f;
-        float boundaryZ = 1f;
+
+
+       
 
         float deltaTime = SystemAPI.Time.DeltaTime;
 
@@ -48,9 +46,9 @@ public partial struct HandleObjectSystem : ISystem {
 
         KeepInBoundsJob job = new KeepInBoundsJob {
             deltaTime = deltaTime,
-            boundryX = boundaryX,
-            boundryY = boundaryY,
-            boundryZ = boundaryZ
+            boundryX = cachedBounds.boundaryX,
+            boundryY = cachedBounds.boundaryY,
+            boundryZ = cachedBounds.boundaryZ
         };
         state.Dependency = job.ScheduleParallel(state.Dependency);
 

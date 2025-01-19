@@ -10,15 +10,15 @@ partial struct CreateSingletonSystem : ISystem {
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
-        //if (!SystemAPI.HasSingleton<BoundarySettings>()) {
-        //    EntityManager entityManager = state.EntityManager;
-        //    Entity entity = entityManager.CreateEntity();
-        //    entityManager.AddComponentData(entity, new BoundarySettings {
-        //        boundaryX = 1000,
-        //        boundaryY = 1,
-        //        boundaryZ = 500
-        //    });
-        //}
+        if (!SystemAPI.HasSingleton<BoundarySettings>()) {
+            EntityManager entityManager = state.EntityManager;
+            Entity entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, new BoundarySettings {
+                boundaryX = 5,
+                boundaryY = 5,
+                boundaryZ = 1
+            });
+        }
         if (!SystemAPI.HasSingleton<EntityCounterComponent>()) {
             EntityManager entityManager = state.EntityManager;
             Entity entity = entityManager.CreateEntity();
