@@ -12,7 +12,7 @@ using Unity.Physics.Systems;
 using Unity.Collections;
 
 
-//[UpdateAfter(typeof(CleanupSystem))]
+[UpdateAfter(typeof(CleanupSystem))]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
 public partial class SpawnerSystem : SystemBase {
@@ -53,7 +53,7 @@ public partial class SpawnerSystem : SystemBase {
         //    boundsInitialized = true;
         //}
 
-        // HandleSpawnQueue();
+         HandleSpawnQueue();
         //  HandleAutoSpawn(SystemAPI.Time.DeltaTime);
 
 
