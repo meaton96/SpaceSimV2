@@ -127,17 +127,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -3693210963476858683, guid: 7475e5d06dc914342bf06b68dc6f4f46, type: 3}
+      propertyPath: m_InitialLinearVelocity.y
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1504484879828947346, guid: 7475e5d06dc914342bf06b68dc6f4f46, type: 3}
       propertyPath: m_Name
       value: Object4
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 7475e5d06dc914342bf06b68dc6f4f46, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.64
+      value: 2.87
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 7475e5d06dc914342bf06b68dc6f4f46, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 2.61
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 7475e5d06dc914342bf06b68dc6f4f46, type: 3}
       propertyPath: m_LocalPosition.z
@@ -187,6 +191,10 @@ PrefabInstance:
     - target: {fileID: 1504484879828947346, guid: 3c6c13b1e7ec5e94e831c34bb6ced221, type: 3}
       propertyPath: m_Name
       value: Object3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3248098594624333979, guid: 3c6c13b1e7ec5e94e831c34bb6ced221, type: 3}
+      propertyPath: m_InitialLinearVelocity.x
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 3c6c13b1e7ec5e94e831c34bb6ced221, type: 3}
       propertyPath: m_LocalPosition.x
@@ -241,6 +249,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -6968425272178446954, guid: 5e31236e40e9ee14384b9c5fe8e95a40, type: 3}
+      propertyPath: m_InitialLinearVelocity.x
+      value: -2
+      objectReference: {fileID: 0}
     - target: {fileID: 1504484879828947346, guid: 5e31236e40e9ee14384b9c5fe8e95a40, type: 3}
       propertyPath: m_Name
       value: Object2
@@ -298,17 +310,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -626105622837546010, guid: 4838f3347142fa9469f65acd70f7cdcd, type: 3}
+      propertyPath: m_InitialLinearVelocity.x
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 1504484879828947346, guid: 4838f3347142fa9469f65acd70f7cdcd, type: 3}
       propertyPath: m_Name
       value: Object1
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 4838f3347142fa9469f65acd70f7cdcd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.68
+      value: -1.54
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 4838f3347142fa9469f65acd70f7cdcd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 2.56
       objectReference: {fileID: 0}
     - target: {fileID: 8034758007028940159, guid: 4838f3347142fa9469f65acd70f7cdcd, type: 3}
       propertyPath: m_LocalPosition.z

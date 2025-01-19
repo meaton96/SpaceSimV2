@@ -4,8 +4,10 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Burst;
+using Unity.Physics;
 
 //handles object movement and collision detection
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct HandleObjectSystem : ISystem {
 
     // private BoundarySettings cachedBounds;
@@ -27,11 +29,21 @@ public partial struct HandleObjectSystem : ISystem {
         //        Debug.Log($"Bounds initialized: X={cachedBounds.boundaryX}, Y={cachedBounds.boundaryY}, Z={cachedBounds.boundaryZ}");
         //    }
         //}
-        float boundaryX = 10f;
-        float boundaryY = 10f;
-        float boundaryZ = 10f;
+
+
+
+
+        float boundaryX = 5f;
+        float boundaryY = 5f;
+        float boundaryZ = 1f;
 
         float deltaTime = SystemAPI.Time.DeltaTime;
+
+        //foreach (ObjectAspect aspect in SystemAPI.Query<ObjectAspect>()) {  
+        //    aspect.KeepInBounds(deltaTime, boundaryX, boundaryY, boundaryZ);
+        //}
+
+        
 
 
         KeepInBoundsJob job = new KeepInBoundsJob {
@@ -44,12 +56,10 @@ public partial struct HandleObjectSystem : ISystem {
 
     }
     [BurstCompile]
-    [WithAll(typeof(Simulated))]
     public partial struct KeepInBoundsJob : IJobEntity {
         public float deltaTime;
         public float boundryX, boundryY, boundryZ;
         public void Execute(ObjectAspect aspect) {
-            // Debug.Log("Executing job");
             aspect.KeepInBounds(deltaTime, boundryX, boundryY, boundryZ);
         }
     }
