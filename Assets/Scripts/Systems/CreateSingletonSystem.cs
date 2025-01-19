@@ -27,10 +27,10 @@ partial struct CreateSingletonSystem : ISystem {
             EntityManager entityManager = state.EntityManager;
             Entity entity = entityManager.CreateEntity();
             entityManager.AddComponentData(entity, new AutoSpawnData {
-                spawnOne = true,
-                spawnTwo = true,
-                spawnThree = true,
-                spawnFour = true,
+                spawnOne = false,
+                spawnTwo = false,
+                spawnThree = false,
+                spawnFour = false,
                 spawnRateOne = 20,
                 spawnRateTwo = 20,
                 spawnRateThree = 20,

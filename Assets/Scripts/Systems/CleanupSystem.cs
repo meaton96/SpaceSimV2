@@ -87,6 +87,11 @@ public partial struct CleanupSystem : ISystem {
         ecb.Dispose();
     }
 
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state) {
+        entitiesToDelete.Dispose();
+    }
+
     //Check for enabled "Collided" components and handle the collision
     //this is enabled from collision checks in HandleObjectSystem
     [BurstCompile]
