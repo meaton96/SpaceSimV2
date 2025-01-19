@@ -10,38 +10,19 @@ using Unity.Physics;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct HandleObjectSystem : ISystem {
 
-     private BoundarySettings cachedBounds;
+    private BoundarySettings cachedBounds;
     private bool boundsInitialized;
 
-    
+
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
         if (!boundsInitialized) {
-
-
-            //Debug.Log($"Entity Exists: {SystemAPI.HasSingleton<BoundarySettings>()}");
-
             cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
             boundsInitialized = true;
-
-            if (boundsInitialized) {
-                Debug.Log($"Bounds initialized: X={cachedBounds.boundaryX}, Y={cachedBounds.boundaryY}, Z={cachedBounds.boundaryZ}");
-            }
         }
 
-
-
-
-       
-
         float deltaTime = SystemAPI.Time.DeltaTime;
-
-        //foreach (ObjectAspect aspect in SystemAPI.Query<ObjectAspect>()) {  
-        //    aspect.KeepInBounds(deltaTime, boundaryX, boundaryY, boundaryZ);
-        //}
-
-        
 
 
         KeepInBoundsJob job = new KeepInBoundsJob {

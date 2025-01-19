@@ -20,8 +20,8 @@ public partial class SpawnerSystem : SystemBase {
     private BoundarySettings cachedBounds;
     private bool boundsInitialized;
 
-    //private AutoSpawnData autoSpawnData;
-    //private bool autoSpawnInitialized;
+    private AutoSpawnData cachedAutoSpawnData;
+    private bool autoSpawnInitialized;
 
     private readonly float[] spawnTimers = new float[4];
     private readonly float[] spawnRates = new float[4];
@@ -54,34 +54,34 @@ public partial class SpawnerSystem : SystemBase {
         }
 
         HandleSpawnQueue();
-        //  HandleAutoSpawn(SystemAPI.Time.DeltaTime);
+          HandleAutoSpawn(SystemAPI.Time.DeltaTime);
 
 
     }
     [BurstCompile]
     public void HandleAutoSpawn(float deltaTime) {
 
-        //for (int i = 0; i < spawnTimers.Length; i++) {
-        //    if (autoSpawnData.GetSpawnStatus(i)) {
-        //        spawnTimers[i] += deltaTime;
-        //        if (spawnTimers[i] >= spawnRates[i]) {
-        //            Spawn(i);
-        //            spawnTimers[i] = 0;
-        //        }
-        //    }
-        //}
+        for (int i = 0; i < spawnTimers.Length; i++) {
+            if (cachedAutoSpawnData.GetSpawnStatus(i)) {
+                spawnTimers[i] += deltaTime;
+                if (spawnTimers[i] >= spawnRates[i]) {
+                    Spawn(i);
+                    spawnTimers[i] = 0;
+                }
+            }
+        }
 
 
     }
     //get the new instance of the AutoSpawnData
     //adjust the spawn rates based on the new data
     public void UpdateAutoSpawnData() {
-        //autoSpawnData = SystemAPI.GetSingleton<AutoSpawnData>();
+        cachedAutoSpawnData = SystemAPI.GetSingleton<AutoSpawnData>();
 
-        //spawnRates[0] = 1 / autoSpawnData.spawnRateOne;
-        //spawnRates[1] = 1 / autoSpawnData.spawnRateTwo;
-        //spawnRates[2] = 1 / autoSpawnData.spawnRateThree;
-        //spawnRates[3] = 1 / autoSpawnData.spawnRateFour;
+        spawnRates[0] = 1 / cachedAutoSpawnData.spawnRateOne;
+        spawnRates[1] = 1 / cachedAutoSpawnData.spawnRateTwo;
+        spawnRates[2] = 1 / cachedAutoSpawnData.spawnRateThree;
+        spawnRates[3] = 1 / cachedAutoSpawnData.spawnRateFour;
 
     }
     //handles spawns from collisions
@@ -89,14 +89,10 @@ public partial class SpawnerSystem : SystemBase {
     public void HandleSpawnQueue() {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
         Queue<int> entiesToSpawn = new Queue<int>();
+
+        //disable duplication component and add to spawn queue
         foreach (var (entityToSpawn, entity) in
             SystemAPI.Query<RefRO<RequestDuplication>>().WithEntityAccess()) {
-
-            //remove the RequestDuplication component
-            //spawn based on type = index
-
-
-            //  array[^1] = (uint)entityToSpawn.ValueRO.index;
             entiesToSpawn.Enqueue(entityToSpawn.ValueRO.index);
             commandBuffer.SetComponentEnabled<RequestDuplication>(entity, false);
             break;
@@ -109,6 +105,7 @@ public partial class SpawnerSystem : SystemBase {
         //    Spawn(type, commandBuffer);
         //}
 
+        //spawn all entities in the queue
         while (entiesToSpawn.Count > 0) {
             int type = entiesToSpawn.Dequeue();
             bool spawned = Spawn(type, commandBuffer);
@@ -117,6 +114,8 @@ public partial class SpawnerSystem : SystemBase {
         }
         commandBuffer.Playback(EntityManager);
     }
+
+    //overload for spawning entities based on index
     [BurstCompile]
     public void Spawn(int index) {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
@@ -180,23 +179,22 @@ public partial class SpawnerSystem : SystemBase {
     //check if the number of entities of the specified type is less than the max allowed
     [BurstCompile]
     private bool CanSpawn(int index) {
-        //if (!autoSpawnData.limitSpawn) return true;
+        if (!cachedAutoSpawnData.limitSpawn) return true;
 
-        //var counter = SystemAPI.GetSingleton<EntityCounterComponent>();
+        var counter = SystemAPI.GetSingleton<EntityCounterComponent>();
 
 
 
-        //bool canSpawn = index switch {
-        //    0 => counter.TypeOneCount < autoSpawnData.maxOfSingleEntityType,
-        //    1 => counter.TypeTwoCount < autoSpawnData.maxOfSingleEntityType,
-        //    2 => counter.TypeThreeCount < autoSpawnData.maxOfSingleEntityType,
-        //    3 => counter.TypeFourCount < autoSpawnData.maxOfSingleEntityType,
-        //    _ => false
-        //};
-        //// Debug.Log($"Type {index} count: {counter.TypeOneCount} < {autoSpawnData.maxOfSingleEntityType}? {canSpawn}");
+        bool canSpawn = index switch {
+            0 => counter.TypeOneCount < cachedAutoSpawnData.maxOfSingleEntityType,
+            1 => counter.TypeTwoCount < cachedAutoSpawnData.maxOfSingleEntityType,
+            2 => counter.TypeThreeCount < cachedAutoSpawnData.maxOfSingleEntityType,
+            3 => counter.TypeFourCount < cachedAutoSpawnData.maxOfSingleEntityType,
+            _ => false
+        };
+        // Debug.Log($"Type {index} count: {counter.TypeOneCount} < {autoSpawnData.maxOfSingleEntityType}? {canSpawn}");
 
-        //return canSpawn;
-        return true;
+        return canSpawn;
 
     }
 
