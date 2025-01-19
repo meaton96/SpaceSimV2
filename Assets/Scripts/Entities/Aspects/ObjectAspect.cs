@@ -13,7 +13,7 @@ public readonly partial struct ObjectAspect : IAspect {
     public readonly RefRO<TypeComponent> typeComponent;
     public readonly RefRW<PhysicsVelocity> physicsVelocity;
 
-
+    [BurstCompile]
     public void KeepInBounds(float deltaTime, float boundryX, float boundryY, float boundryZ) {
         if (localTransform.ValueRO.Position.x > boundryX) {
             localTransform.ValueRW.Position.x = -boundryX;
