@@ -2,13 +2,11 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Stateful;
-using Unity.Collections;
-using UnityEngine;
 using Unity.Physics.Systems;
-using Unity.Mathematics;
-using Unity.Physics.Extensions;
-using Unity.Transforms;
 
+//Handles reading of the stateful collision buffer component provided by Unity.Physics.Stateful
+//marks entities for destruction or duplication based on collision type
+//this system could most likely be improved by changing it to a job
 [UpdateInGroup(typeof(PhysicsSimulationGroup))]
 public partial struct CollisionEventsSystem : ISystem {
 
@@ -38,16 +36,12 @@ public partial struct CollisionEventsSystem : ISystem {
                                 entityManager.SetComponentData(entity, new Collided { otherEntity = otherEntity });
 
                                 //mark one of them to duplicate (picked up by spawner system)
-                                //entityManager.AddComponent<RequestDuplication>(entity);
-                                //entityManager.SetComponentData(entity, new RequestDuplication { index = (int)typeA });
                                 entityManager.SetComponentEnabled<RequestDuplication>(entity, true);
                                 entityManager.SetComponentData(entity, new RequestDuplication { index = (int)typeA });
 
                                 entityManager.SetComponentEnabled<Collided>(otherEntity, true);
                                 entityManager.SetComponentData(otherEntity, new Collided { otherEntity = entity });
 
-                                //apply impulse force?
-                                //  PushApart(entityManager, entity, otherEntity);
 
                             }
                             else {

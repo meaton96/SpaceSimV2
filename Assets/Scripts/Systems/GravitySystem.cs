@@ -7,6 +7,9 @@ using Unity.Mathematics;
 using Unity.Physics.Stateful;
 using Unity.Transforms;
 
+//Handles gravity created by "GravitySource" entities
+//This should be improved by moving this work off the main thread and into a job
+//but only if gravity sources aren't going to overlap (race condition)
 partial struct GravitySystem : ISystem {
 
     public const float G = -1f;
@@ -22,9 +25,12 @@ partial struct GravitySystem : ISystem {
         HandleGravity(ref state);
         
     }
-    
 
 
+    //Iterates all "Gravity Source" entities
+    //For each entity, it checks the trigger buffer for collision events
+    //these collision events represent other entities inside of this ones "Sphere of Influence"
+    //apply a gravity force to each of those entities
     [BurstCompile]
     private void HandleGravity(ref SystemState state) {
         var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -41,10 +47,8 @@ partial struct GravitySystem : ISystem {
                 WithEntityAccess()) {
 
             var gravity = gravitySource.ValueRO;
-            // var childEntity = gravity.SOI;
 
             if (!buffer.IsEmpty) {
-                //var triggerBuffer = SystemAPI.GetBuffer<StatefulTriggerEvent>(childEntity);
 
                 foreach (var collisionEvent in buffer) {
                     var otherEntity = collisionEvent.GetOtherEntity(entity);

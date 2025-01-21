@@ -100,7 +100,7 @@ public class SimulationController : MonoBehaviour {
     [SerializeField]
     private Slider velocitySlider;
 
-    
+
     #endregion
 
     #region Initialization
@@ -179,7 +179,6 @@ public class SimulationController : MonoBehaviour {
         //add listener to velocity slider
         velocitySlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
 
-        //hasInit = true;
     }
     #endregion
 
@@ -188,12 +187,12 @@ public class SimulationController : MonoBehaviour {
     private void Update() {
         UpdateSimulationInfoText();
     }
+    //update the info text onthe ui for entity count, number of entities spawned and destroyed, and boundary size
     private void UpdateSimulationInfoText() {
         updateTimer += Time.deltaTime;
         if (updateTimer > updateInterval) {
 
             EntityCounterComponent counterComponent = entityManager.GetComponentData<EntityCounterComponent>(counterEntity);
-           // BoundarySettings boundarySettings = entityManager.GetComponentData<BoundarySettings>(boundaryEntity);
 
 
             entityCountText.text = $"Object 1: {counterComponent.TypeOneCount}\n" +
@@ -211,12 +210,13 @@ public class SimulationController : MonoBehaviour {
                                     $"Height: {simulationSize.height}\n" +
                                     $"Depth: {simulationSize.depth}";
 
-            velocityText.text = $"{maxVelocity} m/s";
+            
         }
     }
+    //handle changing the velocity slider
     public void HandleVelocitySliderChange(float value) {
         maxVelocity = value;
-        Debug.Log(maxVelocity);
+        velocityText.text = $"{maxVelocity} m/s";
         UpdateAutoSpawnData();
     }
 
@@ -249,14 +249,7 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Update ECS Data Functions
-
-    //public void UpdateMaxEntityAmount(string num) {
-    //    if (int.TryParse(num, out int result)) {
-    //        maxOfSingleEntityType = result;
-    //        UpdateAutoSpawnData();
-    //    }
-    //}
-
+    //clear the simulation
     public void ClearSimulation() {
 
         clearSimSystem.ClearSimulation();
@@ -283,7 +276,6 @@ public class SimulationController : MonoBehaviour {
     private void UpdateAutoSpawnData() {
 
         var spawnData = entityManager.GetComponentData<AutoSpawnData>(spawnDataEntity);
-        //   Debug.Log("updating ecs data");
         spawnData.spawnOne = spawnFlags[0];
         spawnData.spawnTwo = spawnFlags[1];
         spawnData.spawnThree = spawnFlags[2];
@@ -295,22 +287,11 @@ public class SimulationController : MonoBehaviour {
         spawnData.spawnRateFour = spawnRates[3];
 
         spawnData.velocityMax = maxVelocity;
-        //spawnData.maxOfSingleEntityType = this.maxOfSingleEntityType;
         entityManager.SetComponentData(spawnDataEntity, spawnData);
     }
-
-    public void Spawn(int index) {
-        spawnerSystem.Spawn(index);
-    }
-    public void ToggleSimulation() {
-        isPaused = !isPaused;
-        simulationSystemGroup.Enabled = !isPaused;
-        pauseText.text = isPaused ? "Resume" : "Pause";
-
-    }
+    //toggles on or off a spawner via toggle button on UI
     public void ChangeAutoSpawn(int index) {
         spawnFlags[index] = !spawnFlags[index];
-        //   Debug.Log(spawnFlags[index] ? "Spawning" : "Not Spawning");
         UpdateAutoSpawnData();
     }
 

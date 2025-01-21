@@ -3,10 +3,11 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
+//System to create a gravity object at the mouse position
 public partial class CreateGravitySystem : SystemBase {
 
     protected override void OnCreate() {
-        this.Enabled = false;
+        this.Enabled = false; //disabled
         RequireForUpdate<GravitySpawn>();
     }
     protected override void OnUpdate() {

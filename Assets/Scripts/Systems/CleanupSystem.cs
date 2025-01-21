@@ -9,6 +9,10 @@ using Unity.Physics.Extensions;
 using Unity.Transforms;
 using UnityEngine.Rendering;
 
+//Main system for handling entity cleanup (deletion and collided entities)
+//uses object pooling and a native queue to smooth deletion out per frame
+//Queries for entities to delete are done on all threads, structural changes are done onthe main thread
+//this comfortably deleted 16000 entities all at once with no noticeable frame drop
 [BurstCompile]
 [UpdateAfter(typeof(HandleObjectSystem))]
 public partial struct CleanupSystem : ISystem {
@@ -20,14 +24,12 @@ public partial struct CleanupSystem : ISystem {
 
     [BurstCompile]
     public void OnCreate(ref SystemState state) {
-        entitiesToDelete = new NativeQueue<Entity>(Allocator.Persistent);
+        entitiesToDelete = new NativeQueue<Entity>(Allocator.Persistent); //allocate queue memory
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
-      //  CheckForDeletions(ref state);
-
-
+        //parallelize the query for entities to delete
         var collectJob = new CollectEntitiesJob {
             EntitiesToDestroy = entitiesToDelete.AsParallelWriter()
         };
@@ -36,30 +38,28 @@ public partial struct CleanupSystem : ISystem {
         state.Dependency.Complete();
 
         HandleDeletionsFromQueue(ref state);
-
         CheckForCollisions(ref state);
 
     }
     [BurstCompile]
     //Handle the entities in the queue to be deleted
+    //smooths out deletion per frame
     public void HandleDeletionsFromQueue(ref SystemState state) {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
 
-        
         int processedCount = 0;
 
-        
         Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
         EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
 
         //delete entities from the queue until the max number of deletions per frame is reached
-        while (entitiesToDelete.Count > 0 && 
+        while (entitiesToDelete.Count > 0 &&
             (processedCount < (MAX_DELETION_PERCENT * entitiesToDelete.Count)
             || processedCount < MAX_DELETIONS_PER_FRAME
             )) {
             Entity entity = entitiesToDelete.Dequeue();
 
-           
+            //update the entity count
             if (state.EntityManager.HasComponent<TypeComponent>(entity)) {
                 var typeComponent = state.EntityManager.GetComponentData<TypeComponent>(entity);
 
@@ -86,23 +86,24 @@ public partial struct CleanupSystem : ISystem {
                 counter.totalDestroyed++;
             }
 
-            ecb.DestroyEntity(entity);
+            commandBuffer.DestroyEntity(entity);
             processedCount++;
         }
 
-        ecb.SetComponent(entityCounter, counter);
+        commandBuffer.SetComponent(entityCounter, counter);
 
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
     }
 
     [BurstCompile]
     public void OnDestroy(ref SystemState state) {
-        entitiesToDelete.Dispose();
+        entitiesToDelete.Dispose(); //no memory leaks :)
     }
 
     //Check for enabled "Collided" components and handle the collision
     //this is enabled from collision checks in HandleObjectSystem
+    //applies a small push apart force to entities that have collided, this prevents them from colliding over and over again rapidly
     [BurstCompile]
     public void CheckForCollisions(ref SystemState state) {
         var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -135,43 +136,7 @@ public partial struct CleanupSystem : ISystem {
         }
     }
 
-
-
-    //checks for enabled "Annihilate" components and destroys the entities they are attached to
-    ////this is enabled from collision checks in HandleObjectSystem
-    //[BurstCompile]
-    //public void CheckForDeletions(ref SystemState state) {
-    //    var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-    //    Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
-    //    //int[] entityChanges = new int[4];
-    //    EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
-    //    foreach (var (annihilateEnabled, type, entity) in
-    //             SystemAPI.Query<EnabledRefRO<Annihilate>, RefRO<TypeComponent>>().WithEntityAccess()) {
-    //        if (annihilateEnabled.ValueRO) {
-    //            switch ((int)type.ValueRO.type) {
-    //                case 0:
-    //                    counter.TypeOneCount--;
-    //                    break;
-    //                case 1:
-    //                    counter.TypeTwoCount--;
-    //                    break;
-    //                case 2:
-    //                    counter.TypeThreeCount--;
-    //                    break;
-    //                case 3:
-    //                    counter.TypeFourCount--;
-    //                    break;
-    //                default:
-    //                    break;
-    //            }
-    //            counter.totalDestroyed++;
-    //            commandBuffer.DestroyEntity(entity);
-    //        }
-    //    }
-    //    commandBuffer.SetComponent(entityCounter, counter);
-    //    commandBuffer.Playback(state.EntityManager);
-    //}
-
+    //Job for collecting entities to delete
     [BurstCompile]
     partial struct CollectEntitiesJob : IJobEntity {
         public NativeQueue<Entity>.ParallelWriter EntitiesToDestroy;

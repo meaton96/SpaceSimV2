@@ -1,6 +1,9 @@
 using Unity.Burst;
 using Unity.Entities;
 
+//Creates the singleton entities that are used in the simulation
+//For some reason my Authoring components in my subscene did not ever appear in the build (on singletons??)
+//So manually creating them here
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 partial struct CreateSingletonSystem : ISystem {
     [BurstCompile]

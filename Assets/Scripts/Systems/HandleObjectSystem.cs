@@ -6,7 +6,7 @@ using Unity.Transforms;
 using Unity.Burst;
 using Unity.Physics;
 
-//handles object movement and collision detection
+//Handles keeping the objects in bounds via parallel jobs across all workers
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct HandleObjectSystem : ISystem {
 

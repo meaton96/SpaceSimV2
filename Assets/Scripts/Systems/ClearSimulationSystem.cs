@@ -3,6 +3,8 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Burst;
 
+
+//Simple system for marking every current entity for destruction, to be called from user input
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateBefore(typeof(HandleObjectSystem))]
 [BurstCompile]

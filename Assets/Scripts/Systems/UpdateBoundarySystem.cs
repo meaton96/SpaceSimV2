@@ -3,6 +3,8 @@ using UnityEngine;
 using System;
 using Unity.Mathematics;
 
+//Handles changes to the boundary settings from the user input
+//invokes a system action to tell the other systems to update their boundary settings
 [UpdateBefore(typeof(HandleObjectSystem))]
 public partial class UpdateBoundarySystem : SystemBase {
 
@@ -22,23 +24,4 @@ public partial class UpdateBoundarySystem : SystemBase {
         }
     }
 }
-//[UpdateBefore(typeof(HandleObjectSystem))]
-//public partial class UpdateSpawnSettingsSystem : SystemBase {
 
-//    public static event Action OnMaxSpawnRateChange;
-//    public Entity autoSpawnData;
-
-//    private float currentBoundaryX;
-//    private float currentMaxSpawnRate;
-//    protected override void OnCreate() {
-//        RequireForUpdate<AutoSpawnData>();
-//    }
-//    protected override void OnUpdate() {
-//        foreach (var (autoSpawnData, entity) in SystemAPI.Query<RefRO<AutoSpawnData>>().WithEntityAccess()) {
-//            if (autoSpawnData.ValueRO.maxSpawnRate != currentMaxSpawnRate) {
-//                currentMaxSpawnRate = autoSpawnData.ValueRO.maxSpawnRate;
-//                OnMaxSpawnRateChange?.Invoke();
-//            }
-//        }
-//    }
-//}

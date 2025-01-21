@@ -11,7 +11,8 @@ using Unity.Burst;
 using Unity.Physics.Systems;
 using Unity.Collections;
 
-
+//Main system for spawning in new entities
+//Handles spawning from auto spawning (ui sliders/toggles) and collision spawning
 [UpdateAfter(typeof(CleanupSystem))]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -38,35 +39,17 @@ public partial class SpawnerSystem : SystemBase {
 
     }
 
-
+    //flips the initialized flag when the boundary settings change to force a re-fetch
     private void HandleBoundarySettingsChange() {
         boundsInitialized = false;
-        
-
     }
+    
 
     protected override void OnUpdate() {
         UpdateAutoSpawnData();
 
-        if (Input.GetKeyUp(KeyCode.Alpha1)) {
-            Spawn(0);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha2)) {
-            Spawn(1);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha3)) {
-            Spawn(2);
-        }
-        if (Input.GetKeyUp(KeyCode.Alpha4)) {
-            Spawn(3);
-        }
-
         if (!boundsInitialized) {
             cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
-
-            //Debug.Log($"Fetched boundary settings: ({cachedBounds.boundaryX}, " +
-            //    $"{cachedBounds.boundaryY}, {cachedBounds.boundaryZ})");
-
             boundsInitialized = true;
         }
 
@@ -75,11 +58,10 @@ public partial class SpawnerSystem : SystemBase {
 
 
     }
-
+    //handles auto spawning based on the spawn rates set on the interface
     public void HandleAutoSpawn(float deltaTime) {
-
         for (int i = 0; i < spawnTimers.Length; i++) {
-            if (cachedAutoSpawnData.GetSpawnStatus(i)) {
+            if (cachedAutoSpawnData.GetSpawnStatus(i)) { 
                 spawnTimers[i] += deltaTime;
                 if (spawnTimers[i] >= spawnRates[i]) {
                     Spawn(i);
@@ -101,11 +83,11 @@ public partial class SpawnerSystem : SystemBase {
         spawnRates[3] = 1 / cachedAutoSpawnData.spawnRateFour;
 
     }
+    [BurstCompile]
     //handles spawns from collisions
-
     public void HandleSpawnQueue() {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
-        Queue<int> entiesToSpawn = new Queue<int>();
+        NativeQueue<int> entiesToSpawn = new NativeQueue<int>(Allocator.Temp);
 
         //disable duplication component and add to spawn queue
         foreach (var (entityToSpawn, entity) in
@@ -116,12 +98,6 @@ public partial class SpawnerSystem : SystemBase {
 
         }
 
-        ////one spawn per frame
-        //if (entiesToSpawn.Count > 0) {
-        //    int type = entiesToSpawn.Dequeue();
-        //    Spawn(type, commandBuffer);
-        //}
-
         //spawn all entities in the queue
         while (entiesToSpawn.Count > 0) {
             int type = entiesToSpawn.Dequeue();
@@ -130,6 +106,7 @@ public partial class SpawnerSystem : SystemBase {
                 UpdateEntityCounter(type, true, commandBuffer);
         }
         commandBuffer.Playback(EntityManager);
+        entiesToSpawn.Dispose();
     }
 
     //overload for spawning entities based on index
