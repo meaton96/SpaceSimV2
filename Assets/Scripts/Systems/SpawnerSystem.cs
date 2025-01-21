@@ -35,10 +35,14 @@ public partial class SpawnerSystem : SystemBase {
 
         //subscribe to the boundary settings change event
         UpdateBoundarySystem.OnBoundarySettingsChange += HandleBoundarySettingsChange;
+
     }
+
 
     private void HandleBoundarySettingsChange() {
         boundsInitialized = false;
+        
+
     }
 
     protected override void OnUpdate() {
@@ -67,11 +71,11 @@ public partial class SpawnerSystem : SystemBase {
         }
 
         HandleSpawnQueue();
-          HandleAutoSpawn(SystemAPI.Time.DeltaTime);
+        HandleAutoSpawn(SystemAPI.Time.DeltaTime);
 
 
     }
-    
+
     public void HandleAutoSpawn(float deltaTime) {
 
         for (int i = 0; i < spawnTimers.Length; i++) {
@@ -98,7 +102,7 @@ public partial class SpawnerSystem : SystemBase {
 
     }
     //handles spawns from collisions
-    
+
     public void HandleSpawnQueue() {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
         Queue<int> entiesToSpawn = new Queue<int>();

@@ -15,6 +15,7 @@ public partial struct CleanupSystem : ISystem {
 
     public const float PUSH_APART_FORCE = .5f;
     public const int MAX_DELETIONS_PER_FRAME = 30;
+    private const float MAX_DELETION_PERCENT = .1f;
     public NativeQueue<Entity> entitiesToDelete;
 
     [BurstCompile]
@@ -51,7 +52,11 @@ public partial struct CleanupSystem : ISystem {
         Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
         EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
 
-        while (entitiesToDelete.Count > 0 && processedCount < MAX_DELETIONS_PER_FRAME) {
+        //delete entities from the queue until the max number of deletions per frame is reached
+        while (entitiesToDelete.Count > 0 && 
+            (processedCount < (MAX_DELETION_PERCENT * entitiesToDelete.Count)
+            || processedCount < MAX_DELETIONS_PER_FRAME
+            )) {
             Entity entity = entitiesToDelete.Dequeue();
 
            

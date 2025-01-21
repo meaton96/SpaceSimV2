@@ -143,6 +143,7 @@ public class SimulationController : MonoBehaviour {
 
             spawnRateTexts[i].text = spawnRates[i].ToString();
 
+            //add listeners to radio toggle buttons
             int index = i;
             sizeRadios[i].onValueChanged.AddListener(isOn => {
                 if (isOn) {
@@ -206,12 +207,22 @@ public class SimulationController : MonoBehaviour {
             currentRadioIndex = index;
             currentSimulationSizeIndex = index;
             UpdateECSSimulationBoundary(index);
+            UpdateSliderMax();
             // Deselect all other toggles
             for (int i = 0; i < sizeRadios.Length; i++) {
                 if (i != index) {
                     sizeRadios[i].SetIsOnWithoutNotify(false);
                 }
             }
+        }
+    }
+    //update the maximum value allowed on the slider
+    private void UpdateSliderMax() {
+        for (int i = 0; i < sliders.Length; i++) {
+            float maxRate = simulationSizes[currentSimulationSizeIndex].maxSpawnRate;
+            sliders[i].maxValue = maxRate;
+            if (sliders[i].value > maxRate)
+                sliders[i].value = maxRate;
         }
     }
     #endregion

@@ -2902,10 +2902,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9c3c1885170fdc47892a83f9b4048d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentSimulationSizeIndex: 0
+  updateInterval: 0.02
   entityCountText: {fileID: 1467027672}
   entitySpawnDestroyText: {fileID: 724365229}
   boundarySizeText: {fileID: 1136369986}
-  updateInterval: 0.02
   sliders:
   - {fileID: 706603445008204861}
   - {fileID: 2431951273805003532}
@@ -3422,7 +3423,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &250115108516460050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3552,7 +3553,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &316378174819728954
 GameObject:
   m_ObjectHideFlags: 0
@@ -3672,8 +3673,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SpawnerButtonHandler, Assembly-CSharp
+      - m_Target: {fileID: 1921579613}
+        m_TargetAssemblyTypeName: SimulationController, Assembly-CSharp
         m_MethodName: Spawn
         m_Mode: 3
         m_Arguments:
@@ -3699,9 +3700,9 @@ RectTransform:
   - {fileID: 6921363583255157351}
   m_Father: {fileID: 4530451523100627333}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 70, y: -70}
   m_SizeDelta: {x: 140, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &472779400088484186
@@ -3800,7 +3801,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1921579613}
         m_TargetAssemblyTypeName: SimulationController, Assembly-CSharp
         m_MethodName: ChangeAutoSpawn
         m_Mode: 3
@@ -3899,19 +3900,7 @@ MonoBehaviour:
   m_Value: 20
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1296306853025121144}
-        m_TargetAssemblyTypeName: UnityEngine.MonoBehaviour, UnityEngine
-        m_MethodName: StopAllCoroutines
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!224 &803094392044716412
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4657,19 +4646,7 @@ MonoBehaviour:
   m_Value: 20
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1296306853025121144}
-        m_TargetAssemblyTypeName: UnityEngine.MonoBehaviour, UnityEngine
-        m_MethodName: StopAllCoroutines
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &2503385628315565362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5146,19 +5123,7 @@ MonoBehaviour:
   m_Value: 20
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1296306853025121144}
-        m_TargetAssemblyTypeName: UnityEngine.MonoBehaviour, UnityEngine
-        m_MethodName: StopAllCoroutines
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &3347060707896487690
 GameObject:
   m_ObjectHideFlags: 0
@@ -5223,7 +5188,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1921579613}
         m_TargetAssemblyTypeName: SimulationController, Assembly-CSharp
         m_MethodName: ChangeAutoSpawn
         m_Mode: 3
@@ -6048,9 +6013,9 @@ RectTransform:
   - {fileID: 8926035954200992361}
   m_Father: {fileID: 803094392044716412}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 70, y: -70}
   m_SizeDelta: {x: 140, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &4847627045301713836
@@ -6161,7 +6126,7 @@ GameObject:
   - component: {fileID: 4949662751770698050}
   - component: {fileID: 1296306853025121144}
   m_Layer: 5
-  m_Name: SimulationController
+  m_Name: Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6303,19 +6268,7 @@ MonoBehaviour:
   m_Value: 20
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1296306853025121144}
-        m_TargetAssemblyTypeName: UnityEngine.MonoBehaviour, UnityEngine
-        m_MethodName: StopAllCoroutines
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &5347277073168129202
 GameObject:
   m_ObjectHideFlags: 0
@@ -6433,7 +6386,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1921579613}
         m_TargetAssemblyTypeName: SimulationController, Assembly-CSharp
         m_MethodName: ChangeAutoSpawn
         m_Mode: 3
@@ -6574,7 +6527,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &5857071774825131397
 GameObject:
   m_ObjectHideFlags: 0
@@ -6716,7 +6669,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6382389338624731452
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7325,7 +7278,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1921579613}
         m_TargetAssemblyTypeName: SimulationController, Assembly-CSharp
         m_MethodName: ChangeAutoSpawn
         m_Mode: 3
@@ -7477,9 +7430,9 @@ RectTransform:
   - {fileID: 6649627845752563824}
   m_Father: {fileID: 4267368364446098423}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 70, y: -70}
   m_SizeDelta: {x: 140, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7336271426672391936
@@ -7953,9 +7906,9 @@ RectTransform:
   - {fileID: 4030539867905212094}
   m_Father: {fileID: 7356660350304008402}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 70, y: -70}
   m_SizeDelta: {x: 140, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7980647985238924475

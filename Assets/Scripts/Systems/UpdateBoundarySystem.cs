@@ -22,23 +22,23 @@ public partial class UpdateBoundarySystem : SystemBase {
         }
     }
 }
-[UpdateBefore(typeof(HandleObjectSystem))]
-public partial class UpdateSpawnSettingsSystem : SystemBase {
+//[UpdateBefore(typeof(HandleObjectSystem))]
+//public partial class UpdateSpawnSettingsSystem : SystemBase {
 
-    public static event Action OnMaxSpawnRateChange;
-    public Entity autoSpawnData;
+//    public static event Action OnMaxSpawnRateChange;
+//    public Entity autoSpawnData;
 
-    private float currentBoundaryX;
-    private float currentMaxSpawnRate;
-    protected override void OnCreate() {
-        RequireForUpdate<AutoSpawnData>();
-    }
-    protected override void OnUpdate() {
-        foreach (var (autoSpawnData, entity) in SystemAPI.Query<RefRO<AutoSpawnData>>().WithEntityAccess()) {
-            if (autoSpawnData.ValueRO.maxSpawnRate != currentMaxSpawnRate) {
-                currentMaxSpawnRate = autoSpawnData.ValueRO.maxSpawnRate;
-                OnMaxSpawnRateChange?.Invoke();
-            }
-        }
-    }
-}
+//    private float currentBoundaryX;
+//    private float currentMaxSpawnRate;
+//    protected override void OnCreate() {
+//        RequireForUpdate<AutoSpawnData>();
+//    }
+//    protected override void OnUpdate() {
+//        foreach (var (autoSpawnData, entity) in SystemAPI.Query<RefRO<AutoSpawnData>>().WithEntityAccess()) {
+//            if (autoSpawnData.ValueRO.maxSpawnRate != currentMaxSpawnRate) {
+//                currentMaxSpawnRate = autoSpawnData.ValueRO.maxSpawnRate;
+//                OnMaxSpawnRateChange?.Invoke();
+//            }
+//        }
+//    }
+//}
