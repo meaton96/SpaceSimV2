@@ -174,9 +174,9 @@ public class SimulationController : MonoBehaviour {
     #region Interface Updates
 
     private void Update() {
-        UpdateInterface();
+        UpdateSimulationInfoText();
     }
-    private void UpdateInterface() {
+    private void UpdateSimulationInfoText() {
         updateTimer += Time.deltaTime;
         if (updateTimer > updateInterval) {
 
@@ -206,6 +206,7 @@ public class SimulationController : MonoBehaviour {
     //handle clicking onthe ui toggle button
     public void HandleSizeRadioClick(int index) {
         if (currentRadioIndex != index) {
+            ClearSimulation();
             currentRadioIndex = index;
             currentSimulationSizeIndex = index;
             UpdateECSSimulationBoundary(index);
@@ -239,6 +240,7 @@ public class SimulationController : MonoBehaviour {
     //}
 
     public void ClearSimulation() {
+
         clearSimSystem.ClearSimulation();
     }
 

@@ -28,6 +28,7 @@ public partial struct HandleObjectSystem : ISystem {
 
     }
     [BurstCompile]
+    [WithDisabled(typeof(Annihilate))]
     public partial struct KeepInBoundsJob : IJobEntity {
         public float deltaTime;
         public float boundryX, boundryY, boundryZ;
