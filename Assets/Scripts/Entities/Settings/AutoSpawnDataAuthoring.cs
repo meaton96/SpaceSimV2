@@ -9,7 +9,7 @@ public class AutoSpawnDataAuthoring : MonoBehaviour {
     [SerializeField] private bool spawnThree;
     [SerializeField] private bool spawnFour;
     [SerializeField] private int maxOfSingleEntityType = 15000;
-    [SerializeField] private bool limitSpawn = true;
+    [SerializeField] private bool limitSpawn = false;
 
     [Range(.1f, 40)]
     [SerializeField]
@@ -58,6 +58,7 @@ public struct AutoSpawnData : IComponentData {
     public float minSpawnRate, maxSpawnRate;
     public int maxOfSingleEntityType;
     public bool limitSpawn;
+    public float velocityMax;
 
     public bool GetSpawnStatus(int index) {
         return index switch {

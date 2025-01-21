@@ -38,7 +38,8 @@ partial struct CreateSingletonSystem : ISystem {
                 minSpawnRate = .1f,
                 maxSpawnRate = 40,
                 maxOfSingleEntityType = 15000,
-                limitSpawn = true
+                limitSpawn = false,
+                velocityMax = 5f
             });
 
         }

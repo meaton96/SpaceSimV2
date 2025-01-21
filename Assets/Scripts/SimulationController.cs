@@ -32,6 +32,7 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Simulation Data
+    private float maxVelocity = 5f;
     private bool isPaused = false;
     public readonly bool[] spawnFlags = new bool[4];
     public readonly float[] spawnRates = new float[4];
@@ -93,6 +94,13 @@ public class SimulationController : MonoBehaviour {
 
     [SerializeField]
     private TextMeshProUGUI pauseText;
+
+    [SerializeField]
+    private TextMeshProUGUI velocityText;
+    [SerializeField]
+    private Slider velocitySlider;
+
+    
     #endregion
 
     #region Initialization
@@ -167,6 +175,10 @@ public class SimulationController : MonoBehaviour {
                 UpdateAutoSpawnData();
             });
         }
+
+        //add listener to velocity slider
+        velocitySlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
+
         //hasInit = true;
     }
     #endregion
@@ -198,9 +210,15 @@ public class SimulationController : MonoBehaviour {
             boundarySizeText.text = $"Width: {simulationSize.width}\n" +
                                     $"Height: {simulationSize.height}\n" +
                                     $"Depth: {simulationSize.depth}";
+
+            velocityText.text = $"{maxVelocity} m/s";
         }
     }
-    
+    public void HandleVelocitySliderChange(float value) {
+        maxVelocity = value;
+        Debug.Log(maxVelocity);
+        UpdateAutoSpawnData();
+    }
 
 
     //handle clicking onthe ui toggle button
@@ -275,6 +293,8 @@ public class SimulationController : MonoBehaviour {
         spawnData.spawnRateTwo = spawnRates[1];
         spawnData.spawnRateThree = spawnRates[2];
         spawnData.spawnRateFour = spawnRates[3];
+
+        spawnData.velocityMax = maxVelocity;
         //spawnData.maxOfSingleEntityType = this.maxOfSingleEntityType;
         entityManager.SetComponentData(spawnDataEntity, spawnData);
     }

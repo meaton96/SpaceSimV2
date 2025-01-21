@@ -252,12 +252,14 @@ public partial class SpawnerSystem : SystemBase {
     [BurstCompile]
     private void SpawnEntity(Entity entity, EntityCommandBuffer commandBuffer) {
 
+        float maxVelocity = cachedAutoSpawnData.velocityMax;
+        float minVelocity = maxVelocity * .4f;
         //calculate a initial velocity for the spawned entity
         float3 randomDirection = math.normalize(new float3(
                 UnityEngine.Random.Range(-1f, 1f),
                 UnityEngine.Random.Range(-1f, 1f),
                 0f
-            )) * UnityEngine.Random.Range(2f, 5f);
+            )) * UnityEngine.Random.Range(minVelocity, maxVelocity);
 
         //set the position of the spawned entity to a random position
         float3 randomPosition = new float3(
