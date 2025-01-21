@@ -66,15 +66,19 @@ public partial struct CleanupSystem : ISystem {
                 switch ((int)typeComponent.type) {
                     case 0:
                         counter.TypeOneCount--;
+                        counter.TypeOneCount = math.max(0, counter.TypeFourCount);
                         break;
                     case 1:
                         counter.TypeTwoCount--;
+                        counter.TypeTwoCount = math.max(0, counter.TypeFourCount);
                         break;
                     case 2:
                         counter.TypeThreeCount--;
+                        counter.TypeThreeCount = math.max(0, counter.TypeFourCount);
                         break;
                     case 3:
                         counter.TypeFourCount--;
+                        counter.TypeFourCount = math.max(0, counter.TypeFourCount);
                         break;
                     default:
                         break;

@@ -23,6 +23,7 @@ public class SimulationController : MonoBehaviour {
     private World defaultWorld;
     private SimulationSystemGroup simulationSystemGroup;
     private SpawnerSystem spawnerSystem;
+    private ClearSimulationSystem clearSimSystem;
     private EntityManager entityManager;
     private Entity spawnDataEntity;
     private Entity counterEntity;
@@ -59,8 +60,8 @@ public class SimulationController : MonoBehaviour {
         new SimulationSize {
             width = 4000,
             height = 2000,
-            depth = 10,
-            maxSpawnRate = 500,
+            depth = 5,
+            maxSpawnRate = 400,
             name = "Huge"
         }
     };
@@ -105,6 +106,7 @@ public class SimulationController : MonoBehaviour {
     }
     public void Init() {
         spawnerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SpawnerSystem>();
+        clearSimSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<ClearSimulationSystem>();
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         defaultWorld = World.DefaultGameObjectInjectionWorld;
         simulationSystemGroup = defaultWorld.GetExistingSystemManaged<SimulationSystemGroup>();
@@ -235,6 +237,10 @@ public class SimulationController : MonoBehaviour {
     //        UpdateAutoSpawnData();
     //    }
     //}
+
+    public void ClearSimulation() {
+        clearSimSystem.ClearSimulation();
+    }
 
     //update the ECS boundary component with the new values from the UI changes
     private void UpdateECSSimulationBoundary(int index) {
