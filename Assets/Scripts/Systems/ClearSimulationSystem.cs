@@ -13,7 +13,7 @@ public partial class ClearSimulationSystem : SystemBase {
 
     public void ClearSimulation() {
         var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (typeComponent, entity) in SystemAPI.Query<TypeComponent>().WithEntityAccess()) {
+        foreach (var (_, entity) in SystemAPI.Query<TypeComponent>().WithEntityAccess()) {
             commandBuffer.SetComponentEnabled<Annihilate>(entity, true);
         }
         commandBuffer.Playback(EntityManager);
