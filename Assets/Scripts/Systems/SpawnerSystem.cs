@@ -30,8 +30,17 @@ public partial class SpawnerSystem : SystemBase {
 
     protected override void OnCreate() {
         RequireForUpdate<SpawnerConfig>();
+        RequireForUpdate<AutoSpawnData>();
+        RequireForUpdate<EntityCounterComponent>();
+
+        //subscribe to the boundary settings change event
+        UpdateBoundarySystem.OnBoundarySettingsChange += HandleBoundarySettingsChange;
     }
-    [BurstCompile]
+
+    private void HandleBoundarySettingsChange() {
+        boundsInitialized = false;
+    }
+
     protected override void OnUpdate() {
         UpdateAutoSpawnData();
 
@@ -50,6 +59,10 @@ public partial class SpawnerSystem : SystemBase {
 
         if (!boundsInitialized) {
             cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
+
+            //Debug.Log($"Fetched boundary settings: ({cachedBounds.boundaryX}, " +
+            //    $"{cachedBounds.boundaryY}, {cachedBounds.boundaryZ})");
+
             boundsInitialized = true;
         }
 
@@ -58,7 +71,7 @@ public partial class SpawnerSystem : SystemBase {
 
 
     }
-    [BurstCompile]
+    
     public void HandleAutoSpawn(float deltaTime) {
 
         for (int i = 0; i < spawnTimers.Length; i++) {
@@ -85,7 +98,7 @@ public partial class SpawnerSystem : SystemBase {
 
     }
     //handles spawns from collisions
-    [BurstCompile]
+    
     public void HandleSpawnQueue() {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
         Queue<int> entiesToSpawn = new Queue<int>();
@@ -262,5 +275,9 @@ public partial class SpawnerSystem : SystemBase {
         commandBuffer.SetComponent(_entity, new PhysicsVelocity { Linear = randomDirection });
 
         // Debug.Log($"Spawned entity at {randomPosition} with velocity {randomDirection}");
+    }
+
+    protected override void OnDestroy() {
+        UpdateBoundarySystem.OnBoundarySettingsChange -= HandleBoundarySettingsChange;
     }
 }

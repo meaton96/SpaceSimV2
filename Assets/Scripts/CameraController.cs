@@ -38,7 +38,6 @@ public class CameraController : MonoBehaviour {
 
     private void HandlePan() {
         if (Input.GetKey(panKey)) {
-            Debug.Log("Panning");
             if (Input.GetMouseButtonDown(1)) {
                 lastMousePosition = Input.mousePosition;
             }

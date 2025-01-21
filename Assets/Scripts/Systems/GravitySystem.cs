@@ -18,22 +18,30 @@ partial struct GravitySystem : ISystem {
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
-      
+
+        HandleGravity(ref state);
+        
+    }
+    
+
+
+    [BurstCompile]
+    private void HandleGravity(ref SystemState state) {
         var ecb = new EntityCommandBuffer(Allocator.Temp);
 
         foreach ((
-            RefRO<LocalTransform> localTransform, 
-            RefRO<GravitySource> gravitySource, 
-            DynamicBuffer<StatefulTriggerEvent> buffer, 
+            RefRO<LocalTransform> localTransform,
+            RefRO<GravitySource> gravitySource,
+            DynamicBuffer<StatefulTriggerEvent> buffer,
             Entity entity) in
             SystemAPI.Query<
-                RefRO<LocalTransform>, 
-                RefRO<GravitySource>, 
+                RefRO<LocalTransform>,
+                RefRO<GravitySource>,
                 DynamicBuffer<StatefulTriggerEvent>>().
                 WithEntityAccess()) {
 
             var gravity = gravitySource.ValueRO;
-           // var childEntity = gravity.SOI;
+            // var childEntity = gravity.SOI;
 
             if (!buffer.IsEmpty) {
                 //var triggerBuffer = SystemAPI.GetBuffer<StatefulTriggerEvent>(childEntity);
@@ -60,12 +68,11 @@ partial struct GravitySystem : ISystem {
                 }
             }
 
-            
+
         }
 
         ecb.Playback(state.EntityManager);
     }
-
     [BurstCompile]
     public void OnDestroy(ref SystemState state) {
 
