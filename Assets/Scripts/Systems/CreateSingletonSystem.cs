@@ -40,11 +40,16 @@ partial struct CreateSingletonSystem : ISystem {
                 spawnRateFour = 20,
                 minSpawnRate = .1f,
                 maxSpawnRate = 40,
-                maxOfSingleEntityType = 15000,
-                limitSpawn = false,
+                maxOfSingleEntityType = 4000,
+                limitSpawn = true,
                 velocityMax = 5f
             });
 
+        }
+        if (!SystemAPI.HasSingleton<SpawnRateData>()) {
+            EntityManager entityManager = state.EntityManager;
+            Entity entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, new SpawnRateData { });
         }
 
     }

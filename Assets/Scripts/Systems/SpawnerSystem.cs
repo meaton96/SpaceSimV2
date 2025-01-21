@@ -21,11 +21,21 @@ public partial class SpawnerSystem : SystemBase {
     private BoundarySettings cachedBounds;
     private bool boundsInitialized;
 
+
+
     private AutoSpawnData cachedAutoSpawnData;
     private bool autoSpawnInitialized;
 
+    public const int MAX_SPAWNS_PER_FRAME = 30;
+    //private const float MAX_SPAWN_PERCENT = .1f;
+
     private readonly float[] spawnTimers = new float[4];
-    private readonly float[] spawnRates = new float[4];
+    private readonly float[] spawnsPerSecond = new float[4];
+
+    private NativeQueue<int> spawnQueue;
+
+    float timer;
+    float numSpawned;
 
 
 
@@ -33,6 +43,9 @@ public partial class SpawnerSystem : SystemBase {
         RequireForUpdate<SpawnerConfig>();
         RequireForUpdate<AutoSpawnData>();
         RequireForUpdate<EntityCounterComponent>();
+
+        //allocate memory for queue
+        spawnQueue = new NativeQueue<int>(Allocator.Persistent);
 
         //subscribe to the boundary settings change event
         UpdateBoundarySystem.OnBoundarySettingsChange += HandleBoundarySettingsChange;
@@ -43,7 +56,7 @@ public partial class SpawnerSystem : SystemBase {
     private void HandleBoundarySettingsChange() {
         boundsInitialized = false;
     }
-    
+
 
     protected override void OnUpdate() {
         UpdateAutoSpawnData();
@@ -52,23 +65,10 @@ public partial class SpawnerSystem : SystemBase {
             cachedBounds = SystemAPI.GetSingleton<BoundarySettings>();
             boundsInitialized = true;
         }
-
-        HandleSpawnQueue();
         HandleAutoSpawn(SystemAPI.Time.DeltaTime);
 
+        HandleSpawnQueue(SystemAPI.Time.DeltaTime);
 
-    }
-    //handles auto spawning based on the spawn rates set on the interface
-    public void HandleAutoSpawn(float deltaTime) {
-        for (int i = 0; i < spawnTimers.Length; i++) {
-            if (cachedAutoSpawnData.GetSpawnStatus(i)) { 
-                spawnTimers[i] += deltaTime;
-                if (spawnTimers[i] >= spawnRates[i]) {
-                    Spawn(i);
-                    spawnTimers[i] = 0;
-                }
-            }
-        }
 
 
     }
@@ -77,47 +77,94 @@ public partial class SpawnerSystem : SystemBase {
     public void UpdateAutoSpawnData() {
         cachedAutoSpawnData = SystemAPI.GetSingleton<AutoSpawnData>();
 
-        spawnRates[0] = 1 / cachedAutoSpawnData.spawnRateOne;
-        spawnRates[1] = 1 / cachedAutoSpawnData.spawnRateTwo;
-        spawnRates[2] = 1 / cachedAutoSpawnData.spawnRateThree;
-        spawnRates[3] = 1 / cachedAutoSpawnData.spawnRateFour;
+        spawnsPerSecond[0] = cachedAutoSpawnData.spawnRateOne;
+        spawnsPerSecond[1] = cachedAutoSpawnData.spawnRateTwo;
+        spawnsPerSecond[2] = cachedAutoSpawnData.spawnRateThree;
+        spawnsPerSecond[3] = cachedAutoSpawnData.spawnRateFour;
 
     }
-    [BurstCompile]
-    //handles spawns from collisions
-    public void HandleSpawnQueue() {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
-        NativeQueue<int> entiesToSpawn = new NativeQueue<int>(Allocator.Temp);
+    //handles auto spawning based on the spawn rates set on the interface
+    public void HandleAutoSpawn(float deltaTime) {
+        for (int i = 0; i < spawnTimers.Length; i++) {
+            if (cachedAutoSpawnData.GetSpawnStatus(i)) {
+                if (!CanSpawn(i)) {
+                    continue;
+                }
+                spawnTimers[i] += deltaTime;
 
+                // Calculate how many spawns are needed based on spawnsPerSecond
+                float spawnInterval = 1f / spawnsPerSecond[i];
+                int spawnsToEnqueue = Mathf.FloorToInt(spawnTimers[i] / spawnInterval);
+
+                if (spawnsToEnqueue > 0) {
+                    for (int j = 0; j < spawnsToEnqueue; j++) {
+
+                        spawnQueue.Enqueue(i);
+                    }
+
+                    // Reduce the accumulated timer by the time accounted for spawns
+                    spawnTimers[i] -= spawnsToEnqueue * spawnInterval;
+                }
+            }
+        }
+        //Debug.Log(spawnQueue.Count);
+    }
+
+    [BurstCompile]
+    //handles all entity spawning by pulling them from the queue
+    public void HandleSpawnQueue(float deltaTime) {
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
+        EnqueueCollisionSpawns(commandBuffer, deltaTime);
+
+        int processedCount = 0;
+        timer += deltaTime;
+        //spawn all entities in the queue up to a maximum per frame
+
+        while (spawnQueue.Count > 0 && processedCount < MAX_SPAWNS_PER_FRAME) {
+
+            int type = spawnQueue.Dequeue();
+
+            bool spawned = Spawn(type, commandBuffer);
+            if (spawned) {
+                processedCount++;
+                UpdateEntityCounter(type, false, commandBuffer);
+            }
+
+        }
+
+
+
+        numSpawned += processedCount;
+        if (timer > 1f) {
+            //Debug.Log($"Spawned {numSpawned} over the last 1 second");
+            foreach (var (spawnRateData, entity) in SystemAPI.Query<RefRW<SpawnRateData>>().WithEntityAccess()) {
+                commandBuffer.SetComponent(entity, new SpawnRateData {
+                    currentSpawnRate = numSpawned
+                });
+            }
+            numSpawned = 0;
+            timer = 0;
+        }
+        commandBuffer.Playback(EntityManager);
+
+    }
+    public void EnqueueCollisionSpawns(EntityCommandBuffer commandBuffer, float deltaTime) {
         //disable duplication component and add to spawn queue
+        int numCollisionDetections = 0;
         foreach (var (entityToSpawn, entity) in
             SystemAPI.Query<RefRO<RequestDuplication>>().WithEntityAccess()) {
-            entiesToSpawn.Enqueue(entityToSpawn.ValueRO.index);
+
+            if (CanSpawn(entityToSpawn.ValueRO.index)) {
+
+                numCollisionDetections++;
+
+                spawnQueue.Enqueue(entityToSpawn.ValueRO.index);
+            }
+
             commandBuffer.SetComponentEnabled<RequestDuplication>(entity, false);
-            break;
-
+            //break;
         }
 
-        //spawn all entities in the queue
-        while (entiesToSpawn.Count > 0) {
-            int type = entiesToSpawn.Dequeue();
-            bool spawned = Spawn(type, commandBuffer);
-            if (spawned)
-                UpdateEntityCounter(type, true, commandBuffer);
-        }
-        commandBuffer.Playback(EntityManager);
-        entiesToSpawn.Dispose();
-    }
-
-    //overload for spawning entities based on index
-    [BurstCompile]
-    public void Spawn(int index) {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(WorldUpdateAllocator);
-        bool spawned = Spawn(index, commandBuffer);
-        if (spawned) {
-            UpdateEntityCounter(index, false, commandBuffer);
-        }
-        commandBuffer.Playback(EntityManager);
     }
     [BurstCompile]
     //spawn an entity based on the index
@@ -130,43 +177,43 @@ public partial class SpawnerSystem : SystemBase {
 
 
         bool spawned = false;
-        foreach (var spawner in SystemAPI.Query<RefRO<SpawnerConfig>>()) {
 
-            switch (index) {
-                case 0:
+        switch (index) {
+            case 0:
 
-                    foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerOneComponent>()) {
-                        SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
-                        spawned = true;
-                    }
-                    break;
-                case 1:
-                    foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerTwoComponent>()) {
-                        SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
-                        spawned = true;
-                    }
-                    break;
-                case 2:
-                    foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerThreeComponent>()) {
-                        SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
-                        spawned = true;
-                    }
-                    break;
-                case 3:
-                    foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerFourComponent>()) {
-                        SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
-                        spawned = true;
-                    }
-                    break;
-                default:
-                    Debug.LogError("Invalid index for spawner!");
-                    break;
-            }
-            if (spawned) {
-                return true;
-            }
-
+                foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerOneComponent>()) {
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    spawned = true;
+                }
+                break;
+            case 1:
+                foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerTwoComponent>()) {
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    spawned = true;
+                }
+                break;
+            case 2:
+                foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerThreeComponent>()) {
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    spawned = true;
+                }
+                break;
+            case 3:
+                foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerFourComponent>()) {
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    spawned = true;
+                }
+                break;
+            default:
+                Debug.LogError("Invalid index for spawner!");
+                break;
         }
+        if (spawned) {
+            return true;
+        }
+
+
+
         return false;
     }
 
@@ -262,5 +309,6 @@ public partial class SpawnerSystem : SystemBase {
 
     protected override void OnDestroy() {
         UpdateBoundarySystem.OnBoundarySettingsChange -= HandleBoundarySettingsChange;
+        spawnQueue.Dispose();
     }
 }

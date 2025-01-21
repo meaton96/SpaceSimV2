@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.Entities;
 using UnityEngine;
@@ -28,10 +29,15 @@ public class SimulationController : MonoBehaviour {
     private Entity spawnDataEntity;
     private Entity counterEntity;
     private Entity boundaryEntity;
+    private Entity spawnRateEntity;
 
     #endregion
 
     #region Simulation Data
+
+    private float numDestroyed;
+    private int destroyedSmoothingFrames = 60;
+    private Queue<float> numDestroyedPerFrame = new Queue<float>();
     private float maxVelocity = 5f;
     private bool isPaused = false;
     public readonly bool[] spawnFlags = new bool[4];
@@ -41,28 +47,28 @@ public class SimulationController : MonoBehaviour {
             width = 1000,
             height = 500,
             depth = 1,
-            maxSpawnRate = 40,
+            maxSpawnRate = 50,
             name = "Small"
         },
         new SimulationSize {
             width = 2000,
             height = 1000,
             depth = 1,
-            maxSpawnRate = 80,
+            maxSpawnRate = 50,
             name = "Medium"
         },
         new SimulationSize {
             width = 3000,
             height = 1500,
             depth = 2,
-            maxSpawnRate = 160,
+            maxSpawnRate = 50,
             name = "Large"
         },
         new SimulationSize {
             width = 4000,
             height = 2000,
             depth = 5,
-            maxSpawnRate = 400,
+            maxSpawnRate = 50,
             name = "Huge"
         }
     };
@@ -123,6 +129,7 @@ public class SimulationController : MonoBehaviour {
         spawnDataEntity = entityManager.CreateEntityQuery(typeof(AutoSpawnData)).GetSingletonEntity();
         counterEntity = entityManager.CreateEntityQuery(typeof(EntityCounterComponent)).GetSingletonEntity();
         boundaryEntity = entityManager.CreateEntityQuery(typeof(BoundarySettings)).GetSingletonEntity();
+        spawnRateEntity = entityManager.CreateEntityQuery(typeof(SpawnRateData)).GetSingletonEntity();
 
         //get initial spawn data
         var spawnData = entityManager.GetComponentData<AutoSpawnData>(spawnDataEntity);
@@ -190,19 +197,34 @@ public class SimulationController : MonoBehaviour {
     //update the info text onthe ui for entity count, number of entities spawned and destroyed, and boundary size
     private void UpdateSimulationInfoText() {
         updateTimer += Time.deltaTime;
+
+        
+
         if (updateTimer > updateInterval) {
 
             EntityCounterComponent counterComponent = entityManager.GetComponentData<EntityCounterComponent>(counterEntity);
+            SpawnRateData spawnRateComponent = entityManager.GetComponentData<SpawnRateData>(spawnRateEntity);
+            float spawnRate = spawnRateComponent.currentSpawnRate;
+            float destroyRate = (counterComponent.totalDestroyed - numDestroyed) / updateInterval;
 
+            if (numDestroyedPerFrame.Count > destroyedSmoothingFrames) {
+                numDestroyedPerFrame.Dequeue();
+            }
+
+            numDestroyedPerFrame.Enqueue(destroyRate);
+
+            float smoothedDestroyRate = numDestroyedPerFrame.Average();
+            numDestroyed = counterComponent.totalDestroyed;
 
             entityCountText.text = $"Object 1: {counterComponent.TypeOneCount}\n" +
                                    $"Object 2: {counterComponent.TypeTwoCount}\n" +
                                    $"Object 3: {counterComponent.TypeThreeCount}\n" +
                                    $"Object 4: {counterComponent.TypeFourCount}\n";
 
-            entitySpawnDestroyText.text = $"Sim Spawns: {counterComponent.totalSpawnedBySimulator}\n" +
-                                          $"Col Spawns: {counterComponent.totalSpawnedByCollisions}\n" +
-                                          $"Destroyed: {counterComponent.totalDestroyed}";
+            entitySpawnDestroyText.text = $"Spawns: {counterComponent.totalSpawnedBySimulator}\n " +
+                                          $"/sec: {Mathf.Ceil(spawnRate)}\n" +
+                                          $"Deletes: {counterComponent.totalDestroyed}\n" +
+                                          $"/sec: {Mathf.Ceil(smoothedDestroyRate)}";
 
             var simulationSize = simulationSizes[currentSimulationSizeIndex];
 
@@ -210,7 +232,7 @@ public class SimulationController : MonoBehaviour {
                                     $"Height: {simulationSize.height}\n" +
                                     $"Depth: {simulationSize.depth}";
 
-            
+
         }
     }
     //handle changing the velocity slider

@@ -18,7 +18,7 @@ using UnityEngine.Rendering;
 public partial struct CleanupSystem : ISystem {
 
     public const float PUSH_APART_FORCE = .5f;
-    public const int MAX_DELETIONS_PER_FRAME = 30;
+    public const int MAX_DELETIONS_PER_FRAME = 50;
     private const float MAX_DELETION_PERCENT = .1f;
     public NativeQueue<Entity> entitiesToDelete;
 
@@ -52,6 +52,8 @@ public partial struct CleanupSystem : ISystem {
         Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
         EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
 
+
+
         //delete entities from the queue until the max number of deletions per frame is reached
         while (entitiesToDelete.Count > 0 &&
             (processedCount < (MAX_DELETION_PERCENT * entitiesToDelete.Count)
@@ -65,19 +67,15 @@ public partial struct CleanupSystem : ISystem {
 
                 switch ((int)typeComponent.type) {
                     case 0:
-                        counter.TypeOneCount--;
-                        counter.TypeOneCount = math.max(0, counter.TypeFourCount);
+                        counter.TypeOneCount = math.max(0, counter.TypeOneCount - 1);
                         break;
                     case 1:
-                        counter.TypeTwoCount--;
-                        counter.TypeTwoCount = math.max(0, counter.TypeFourCount);
+                        counter.TypeTwoCount = math.max(0, counter.TypeTwoCount);
                         break;
                     case 2:
-                        counter.TypeThreeCount--;
-                        counter.TypeThreeCount = math.max(0, counter.TypeFourCount);
+                        counter.TypeThreeCount = math.max(0, counter.TypeThreeCount);
                         break;
                     case 3:
-                        counter.TypeFourCount--;
                         counter.TypeFourCount = math.max(0, counter.TypeFourCount);
                         break;
                     default:
