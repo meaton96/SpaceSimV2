@@ -118,9 +118,9 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Frame Time Tracking
-    private const float targetFramerate = 60f;
-    private const float warningFramerate = 30f;
-    private const float pauseFramerate = 15f;
+    private const float targetFramerate = 30f;
+    private const float warningFramerate = 15f;
+    private const float pauseFramerate = 10f;
     private float waitTime = 2f;
     private float waitTimer;
     private const float smoothingFrames = 10;
