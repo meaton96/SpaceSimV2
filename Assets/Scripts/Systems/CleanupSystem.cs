@@ -12,7 +12,7 @@ using UnityEngine.Rendering;
 //Main system for handling entity cleanup (deletion and collided entities)
 //uses object pooling and a native queue to smooth deletion out per frame
 //Queries for entities to delete are done on all threads, structural changes are done onthe main thread
-//this comfortably deleted 16000 entities all at once with no noticeable frame drop
+//this comfortably deleted 40000 entities all at once with no noticeable frame drop
 [BurstCompile]
 [UpdateAfter(typeof(HandleObjectSystem))]
 public partial struct CleanupSystem : ISystem {
@@ -54,6 +54,7 @@ public partial struct CleanupSystem : ISystem {
 
 
         NativeArray<int> deletes = new NativeArray<int>(4, Allocator.Temp);
+
         //delete entities from the queue until the max number of deletions per frame is reached
         while (entitiesToDelete.Count > 0 &&
             (processedCount < (MAX_DELETION_PERCENT * entitiesToDelete.Count)
@@ -61,29 +62,6 @@ public partial struct CleanupSystem : ISystem {
             )) {
             var (entity, type) = entitiesToDelete.Dequeue();
             deletes[type]++;
-            //update the entity count
-            //if (state.EntityManager.HasComponent<TypeComponent>(entity)) {
-            //    var typeComponent = state.EntityManager.GetComponentData<TypeComponent>(entity);
-
-            //    switch ((int)typeComponent.type) {
-            //        case 0:
-            //            counter.TypeOneCount = math.max(0, counter.TypeOneCount - 1);
-            //            break;
-            //        case 1:
-            //            counter.TypeTwoCount = math.max(0, counter.TypeTwoCount);
-            //            break;
-            //        case 2:
-            //            counter.TypeThreeCount = math.max(0, counter.TypeThreeCount);
-            //            break;
-            //        case 3:
-            //            counter.TypeFourCount = math.max(0, counter.TypeFourCount);
-            //            break;
-            //        default:
-            //            break;
-            //    }
-            //    counter.totalDestroyed++;
-            //}
-
             commandBuffer.DestroyEntity(entity);
             processedCount++;
         }
