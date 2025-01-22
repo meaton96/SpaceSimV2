@@ -20,11 +20,11 @@ public partial struct CleanupSystem : ISystem {
     public const float PUSH_APART_FORCE = .5f;
     public const int MAX_DELETIONS_PER_FRAME = 50;
     private const float MAX_DELETION_PERCENT = .1f;
-    public NativeQueue<Entity> entitiesToDelete;
+    public NativeQueue<(Entity, int)> entitiesToDelete;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state) {
-        entitiesToDelete = new NativeQueue<Entity>(Allocator.Persistent); //allocate queue memory
+        entitiesToDelete = new NativeQueue<(Entity, int)>(Allocator.Persistent); //allocate queue memory
     }
 
     [BurstCompile]
@@ -53,40 +53,49 @@ public partial struct CleanupSystem : ISystem {
         EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
 
 
-
+        NativeArray<int> deletes = new NativeArray<int>(4, Allocator.Temp);
         //delete entities from the queue until the max number of deletions per frame is reached
         while (entitiesToDelete.Count > 0 &&
             (processedCount < (MAX_DELETION_PERCENT * entitiesToDelete.Count)
             || processedCount < MAX_DELETIONS_PER_FRAME
             )) {
-            Entity entity = entitiesToDelete.Dequeue();
-
+            var (entity, type) = entitiesToDelete.Dequeue();
+            deletes[type]++;
             //update the entity count
-            if (state.EntityManager.HasComponent<TypeComponent>(entity)) {
-                var typeComponent = state.EntityManager.GetComponentData<TypeComponent>(entity);
+            //if (state.EntityManager.HasComponent<TypeComponent>(entity)) {
+            //    var typeComponent = state.EntityManager.GetComponentData<TypeComponent>(entity);
 
-                switch ((int)typeComponent.type) {
-                    case 0:
-                        counter.TypeOneCount = math.max(0, counter.TypeOneCount - 1);
-                        break;
-                    case 1:
-                        counter.TypeTwoCount = math.max(0, counter.TypeTwoCount);
-                        break;
-                    case 2:
-                        counter.TypeThreeCount = math.max(0, counter.TypeThreeCount);
-                        break;
-                    case 3:
-                        counter.TypeFourCount = math.max(0, counter.TypeFourCount);
-                        break;
-                    default:
-                        break;
-                }
-                counter.totalDestroyed++;
-            }
+            //    switch ((int)typeComponent.type) {
+            //        case 0:
+            //            counter.TypeOneCount = math.max(0, counter.TypeOneCount - 1);
+            //            break;
+            //        case 1:
+            //            counter.TypeTwoCount = math.max(0, counter.TypeTwoCount);
+            //            break;
+            //        case 2:
+            //            counter.TypeThreeCount = math.max(0, counter.TypeThreeCount);
+            //            break;
+            //        case 3:
+            //            counter.TypeFourCount = math.max(0, counter.TypeFourCount);
+            //            break;
+            //        default:
+            //            break;
+            //    }
+            //    counter.totalDestroyed++;
+            //}
 
             commandBuffer.DestroyEntity(entity);
             processedCount++;
         }
+
+        //update the entity counter
+        counter.TypeOneCount = math.max(0, counter.TypeOneCount - deletes[0]);
+        counter.TypeTwoCount = math.max(0, counter.TypeTwoCount - deletes[1]);
+        counter.TypeThreeCount = math.max(0, counter.TypeThreeCount - deletes[2]);
+        counter.TypeFourCount = math.max(0, counter.TypeFourCount - deletes[3]);
+
+        counter.totalDestroyed += processedCount;
+        deletes.Dispose();
 
         commandBuffer.SetComponent(entityCounter, counter);
 
@@ -137,11 +146,11 @@ public partial struct CleanupSystem : ISystem {
     //Job for collecting entities to delete
     [BurstCompile]
     partial struct CollectEntitiesJob : IJobEntity {
-        public NativeQueue<Entity>.ParallelWriter EntitiesToDestroy;
+        public NativeQueue<(Entity, int)>.ParallelWriter EntitiesToDestroy;
 
-        public void Execute(Entity entity, in Annihilate annihilate) {
+        public void Execute(Entity entity, in TypeComponent type, in Annihilate annihilate) {
 
-            EntitiesToDestroy.Enqueue(entity);
+            EntitiesToDestroy.Enqueue((entity, (int)type.type));
         }
     }
 
