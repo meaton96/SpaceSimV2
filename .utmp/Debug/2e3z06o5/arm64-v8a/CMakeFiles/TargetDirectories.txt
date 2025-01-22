@@ -1,0 +1,5 @@
+C:/Users/Mike/Documents/GitHub/SpaceSimV2/.utmp/Debug/2e3z06o5/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/Mike/Documents/GitHub/SpaceSimV2/.utmp/Debug/2e3z06o5/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/Mike/Documents/GitHub/SpaceSimV2/.utmp/Debug/2e3z06o5/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/Users/Mike/Documents/GitHub/SpaceSimV2/.utmp/Debug/2e3z06o5/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/Users/Mike/Documents/GitHub/SpaceSimV2/.utmp/Debug/2e3z06o5/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir

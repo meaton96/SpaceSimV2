@@ -36,7 +36,7 @@ public class SimulationController : MonoBehaviour {
 
     #region Simulation Data
 
-    
+
 
     private float numDestroyed;
     private int destroyedSmoothingFrames = 60;
@@ -80,39 +80,40 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Interface Fields
-    
+
     private float updateTimer;
     private int currentRadioIndex = -1;
     [SerializeField] private float updateInterval = .02f;
-    [SerializeField]
-    private TextMeshProUGUI frameTimeWarningText;
-    [SerializeField]
-    private TextMeshProUGUI pauseButtonText;
-    [SerializeField]
-    private GameObject crashMessageParent;
-    [SerializeField]
-    private TextMeshProUGUI entityCountText;
-    [SerializeField]
-    private TextMeshProUGUI entitySpawnDestroyText;
-    [SerializeField]
-    private TextMeshProUGUI boundarySizeText;
+    [SerializeField] private Interface pcInterface;
+    [SerializeField] private Interface mobileInterface;
+    private bool isMobile = false;
+    //[SerializeField]
+    //private TextMeshProUGUI frameTimeWarningText;
+    //[SerializeField]
+    //private TextMeshProUGUI pauseButtonText;
+    //[SerializeField]
+    //private GameObject crashMessageParent;
+    //[SerializeField]
+    //private TextMeshProUGUI entityCountText;
+    //[SerializeField]
+    //private TextMeshProUGUI entitySpawnDestroyText;
+    //[SerializeField]
+    //private TextMeshProUGUI boundarySizeText;
 
-    [SerializeField]
-    private Slider[] sliders = new Slider[4];
+    //[SerializeField]
+    //private Slider[] sliders = new Slider[4];
 
-    [SerializeField]
-    private Toggle[] sizeRadios = new Toggle[4];
+    //[SerializeField]
+    //private Toggle[] sizeRadios = new Toggle[4];
 
-    [SerializeField]
-    private TextMeshProUGUI[] spawnRateTexts = new TextMeshProUGUI[4];
+    //[SerializeField]
+    //private TextMeshProUGUI[] spawnRateTexts = new TextMeshProUGUI[4];
 
-    [SerializeField]
-    private TextMeshProUGUI pauseText;
 
-    [SerializeField]
-    private TextMeshProUGUI velocityText;
-    [SerializeField]
-    private Slider velocitySlider;
+    //[SerializeField]
+    //private TextMeshProUGUI velocityText;
+    //[SerializeField]
+    //private Slider velocitySlider;
 
 
     #endregion
@@ -173,21 +174,29 @@ public class SimulationController : MonoBehaviour {
 
         // Initialize UI elements
         for (int i = 0; i < 4; i++) {
-            sliders[i].value = spawnRates[i];
-            sliders[i].minValue = minSpawnRate;
-            sliders[i].maxValue = maxSpawnRate;
 
-            spawnRateTexts[i].text = spawnRates[i].ToString();
+            var slider = isMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
+
+            slider.value = spawnRates[i];
+            slider.minValue = minSpawnRate;
+            slider.maxValue = maxSpawnRate;
+
+            var spawnRateText = isMobile ? mobileInterface.spawnRateTexts[i] : pcInterface.spawnRateTexts[i];
+
+            spawnRateText.text = spawnRates[i].ToString();
 
             //add listeners to radio toggle buttons
             int index = i;
-            sizeRadios[i].onValueChanged.AddListener(isOn => {
+
+            var sizeRadio = isMobile ? mobileInterface.sizeRadios[i] : pcInterface.sizeRadios[i];
+
+            sizeRadio.onValueChanged.AddListener(isOn => {
                 if (isOn) {
 
                     HandleSizeRadioClick(index);
                 }
                 else if (currentRadioIndex == index) {
-                    sizeRadios[index].SetIsOnWithoutNotify(true);
+                    sizeRadio.SetIsOnWithoutNotify(true);
                 }
             });
         }
@@ -195,15 +204,18 @@ public class SimulationController : MonoBehaviour {
         //setup listeners for the sliders 
         for (int i = 0; i < 4; i++) {
             int index = i;
-            sliders[index].onValueChanged.AddListener(value => {
+
+            var slider = isMobile ? mobileInterface.sliders[index] : pcInterface.sliders[index];
+            var spawnRateText = isMobile ? mobileInterface.spawnRateTexts[index] : pcInterface.spawnRateTexts[index];
+            slider.onValueChanged.AddListener(value => {
                 spawnRates[index] = value;
-                spawnRateTexts[index].text = value.ToString();
+                spawnRateText.text = value.ToString();
                 UpdateAutoSpawnData();
             });
         }
-
+        var velSlider = isMobile ? mobileInterface.velocitySlider : pcInterface.velocitySlider;
         //add listener to velocity slider
-        velocitySlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
+        velSlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
 
     }
     #endregion
@@ -224,12 +236,13 @@ public class SimulationController : MonoBehaviour {
             if (averageFrameTime > 1 / pauseFramerate) {
                 HandleEmergencyPause();
             }
-
+            var frameTimeText = isMobile ? mobileInterface.frameTimeWarningText : pcInterface.frameTimeWarningText;
             if (averageFrameTime > 1 / warningFramerate) {
-                frameTimeWarningText.gameObject.SetActive(true);
+
+                frameTimeText.gameObject.SetActive(true);
             }
             else {
-                frameTimeWarningText.gameObject.SetActive(false);
+                frameTimeText.gameObject.SetActive(false);
             }
         }
 
@@ -240,13 +253,15 @@ public class SimulationController : MonoBehaviour {
     #region Pause
     //handle pausing the simulation to avoid crashing the game
     private void HandleEmergencyPause() {
-        crashMessageParent.SetActive(true);
+        var messageParent = isMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
+        messageParent.SetActive(true);
         HandlePause();
     }
-public void HandleEmergencySimulationClear() {
+    public void HandleEmergencySimulationClear() {
         HandlePause();
         ClearSimulation();
-        crashMessageParent.SetActive(false);
+        var messageParent = isMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
+        messageParent.SetActive(false);
 
     }
     //toggle pausing the simulation
@@ -254,6 +269,7 @@ public void HandleEmergencySimulationClear() {
         isPaused = !isPaused;
         var simulationGroup = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SimulationSystemGroup>();
         simulationGroup.Enabled = !isPaused;
+        var pauseButtonText = isMobile ? mobileInterface.pauseButtonText : pcInterface.pauseButtonText;
         pauseButtonText.text = isPaused ? "Resume" : "Pause";
         Time.timeScale = isPaused ? 0 : 1;
 
@@ -269,6 +285,8 @@ public void HandleEmergencySimulationClear() {
         UpdateSimulationInfoText();
 
     }
+
+
 
     //update the info text onthe ui for entity count, number of entities spawned and destroyed, and boundary size
     private void UpdateSimulationInfoText() {
@@ -292,19 +310,25 @@ public void HandleEmergencySimulationClear() {
             float smoothedDestroyRate = numDestroyedPerFrame.Average();
             numDestroyed = counterComponent.totalDestroyed;
 
-            entityCountText.text = $"Object 1: {counterComponent.TypeOneCount}\n" +
+            var updateText = isMobile ? mobileInterface.entityCountText : pcInterface.entityCountText;
+
+            updateText.text = $"Object 1: {counterComponent.TypeOneCount}\n" +
                                    $"Object 2: {counterComponent.TypeTwoCount}\n" +
                                    $"Object 3: {counterComponent.TypeThreeCount}\n" +
                                    $"Object 4: {counterComponent.TypeFourCount}\n";
 
-            entitySpawnDestroyText.text = $"Spawns: {counterComponent.totalSpawnedBySimulator}\n " +
+            updateText = isMobile ? mobileInterface.entitySpawnDestroyText : pcInterface.entitySpawnDestroyText;
+
+            updateText.text = $"Spawns: {counterComponent.totalSpawnedBySimulator}\n " +
                                           $"/sec: {Mathf.Ceil(spawnRate)}\n" +
                                           $"Deletes: {counterComponent.totalDestroyed}\n" +
                                           $"/sec: {Mathf.Ceil(smoothedDestroyRate)}";
 
             var simulationSize = simulationSizes[currentSimulationSizeIndex];
 
-            boundarySizeText.text = $"Width: {simulationSize.width}\n" +
+            updateText = isMobile ? mobileInterface.boundarySizeText : pcInterface.boundarySizeText;
+
+            updateText.text = $"Width: {simulationSize.width}\n" +
                                     $"Height: {simulationSize.height}\n" +
                                     $"Depth: {simulationSize.depth}";
 
@@ -314,7 +338,8 @@ public void HandleEmergencySimulationClear() {
     //handle changing the velocity slider
     public void HandleVelocitySliderChange(float value) {
         maxVelocity = value;
-        velocityText.text = $"{maxVelocity} m/s";
+        var updateText = isMobile ? mobileInterface.velocityText : pcInterface.velocityText;
+        updateText.text = $"{maxVelocity} m/s";
         UpdateAutoSpawnData();
     }
 
@@ -328,20 +353,27 @@ public void HandleEmergencySimulationClear() {
             UpdateECSSimulationBoundary(index);
             UpdateSliderMax();
             // Deselect all other toggles
-            for (int i = 0; i < sizeRadios.Length; i++) {
+            for (int i = 0; i < 4; i++) {
                 if (i != index) {
-                    sizeRadios[i].SetIsOnWithoutNotify(false);
+                    if (isMobile) {
+                        mobileInterface.sizeRadios[i].SetIsOnWithoutNotify(false);
+                    }
+                    else {
+                        pcInterface.sizeRadios[i].SetIsOnWithoutNotify(false);
+                    }
+
                 }
             }
         }
     }
     //update the maximum value allowed on the slider
     private void UpdateSliderMax() {
-        for (int i = 0; i < sliders.Length; i++) {
+        for (int i = 0; i < 4; i++) {
             float maxRate = simulationSizes[currentSimulationSizeIndex].maxSpawnRate;
-            sliders[i].maxValue = maxRate;
-            if (sliders[i].value > maxRate)
-                sliders[i].value = maxRate;
+            var slider = isMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
+            slider.maxValue = maxRate;
+            if (slider.value > maxRate)
+                slider.value = maxRate;
         }
     }
     #endregion

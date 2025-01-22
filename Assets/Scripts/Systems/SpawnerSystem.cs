@@ -194,19 +194,19 @@ public partial class SpawnerSystem : SystemBase {
                 break;
             case 1:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerTwoComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 4f);
                     spawned = true;
                 }
                 break;
             case 2:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerThreeComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 2f);
                     spawned = true;
                 }
                 break;
             case 3:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerFourComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 1.5f);
                     spawned = true;
                 }
                 break;
@@ -257,7 +257,7 @@ public partial class SpawnerSystem : SystemBase {
 
     //spawns the passed in entity using the provided command buffer
     [BurstCompile]
-    private void SpawnEntity(Entity entity, EntityCommandBuffer commandBuffer) {
+    private void SpawnEntity(Entity entity, EntityCommandBuffer commandBuffer, float scale = 1f) {
 
         float maxVelocity = cachedAutoSpawnData.velocityMax;
         float minVelocity = maxVelocity * .4f;
@@ -283,7 +283,7 @@ public partial class SpawnerSystem : SystemBase {
         commandBuffer.SetComponent(_entity, new LocalTransform {
             Position = randomPosition,
             Rotation = quaternion.identity,
-            Scale = 1f
+            Scale = scale
         });
         commandBuffer.SetComponent(_entity, new PhysicsVelocity { Linear = randomDirection });
 
