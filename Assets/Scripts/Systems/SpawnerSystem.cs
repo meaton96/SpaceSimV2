@@ -57,6 +57,11 @@ public partial class SpawnerSystem : SystemBase {
         boundsInitialized = false;
     }
 
+    //clear the spawn queue
+    //used to clear spawns when the simulation is cleared
+    public void ClearSpawnQueue() {
+        spawnQueue.Clear();
+    }
 
     protected override void OnUpdate() {
         UpdateAutoSpawnData();

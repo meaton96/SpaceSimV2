@@ -5,6 +5,7 @@ using System.Linq;
 using TMPro;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 public struct SimulationSize {
     public float width;
@@ -35,6 +36,8 @@ public class SimulationController : MonoBehaviour {
 
     #region Simulation Data
 
+    
+
     private float numDestroyed;
     private int destroyedSmoothingFrames = 60;
     private Queue<float> numDestroyedPerFrame = new Queue<float>();
@@ -44,22 +47,22 @@ public class SimulationController : MonoBehaviour {
     public readonly float[] spawnRates = new float[4];
     public readonly List<SimulationSize> simulationSizes = new List<SimulationSize>() {
         new SimulationSize {
-            width = 1000,
-            height = 500,
+            width = 100,
+            height = 50,
             depth = 1,
-            maxSpawnRate = 50,
+            maxSpawnRate = 40,
             name = "Small"
         },
         new SimulationSize {
-            width = 2000,
-            height = 1000,
+            width = 1000,
+            height = 5000,
             depth = 1,
             maxSpawnRate = 50,
             name = "Medium"
         },
         new SimulationSize {
-            width = 3000,
-            height = 1500,
+            width = 2000,
+            height = 1000,
             depth = 2,
             maxSpawnRate = 50,
             name = "Large"
@@ -77,11 +80,16 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Interface Fields
+    
     private float updateTimer;
     private int currentRadioIndex = -1;
     [SerializeField] private float updateInterval = .02f;
-
-
+    [SerializeField]
+    private TextMeshProUGUI frameTimeWarningText;
+    [SerializeField]
+    private TextMeshProUGUI pauseButtonText;
+    [SerializeField]
+    private GameObject crashMessageParent;
     [SerializeField]
     private TextMeshProUGUI entityCountText;
     [SerializeField]
@@ -106,6 +114,17 @@ public class SimulationController : MonoBehaviour {
     [SerializeField]
     private Slider velocitySlider;
 
+
+    #endregion
+
+    #region Frame Time Tracking
+    private const float targetFramerate = 60f;
+    private const float warningFramerate = 30f;
+    private const float pauseFramerate = 15f;
+    private float waitTime = 2f;
+    private float waitTimer;
+    private const float smoothingFrames = 10;
+    private Queue<float> frameTimes = new Queue<float>();
 
     #endregion
 
@@ -189,16 +208,73 @@ public class SimulationController : MonoBehaviour {
     }
     #endregion
 
+    #region Frametime Tracking
+    private void TrackFrameTime() {
+        //  Debug.Log(Time.deltaTime);
+        if (waitTimer < waitTime) {
+            waitTimer += Time.deltaTime;
+        }
+        else {
+            if (frameTimes.Count > smoothingFrames) {
+                frameTimes.Dequeue();
+            }
+            frameTimes.Enqueue(Time.deltaTime);
+            float averageFrameTime = frameTimes.Average();
+
+            if (averageFrameTime > 1 / pauseFramerate) {
+                HandleEmergencyPause();
+            }
+
+            if (averageFrameTime > 1 / warningFramerate) {
+                frameTimeWarningText.gameObject.SetActive(true);
+            }
+            else {
+                frameTimeWarningText.gameObject.SetActive(false);
+            }
+        }
+
+
+    }
+    #endregion
+
+    #region Pause
+    //handle pausing the simulation to avoid crashing the game
+    private void HandleEmergencyPause() {
+        crashMessageParent.SetActive(true);
+        HandlePause();
+    }
+public void HandleEmergencySimulationClear() {
+        HandlePause();
+        ClearSimulation();
+        crashMessageParent.SetActive(false);
+
+    }
+    //toggle pausing the simulation
+    public void HandlePause() {
+        isPaused = !isPaused;
+        var simulationGroup = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SimulationSystemGroup>();
+        simulationGroup.Enabled = !isPaused;
+        pauseButtonText.text = isPaused ? "Resume" : "Pause";
+        Time.timeScale = isPaused ? 0 : 1;
+
+
+    }
+
+    #endregion
+
     #region Interface Updates
 
     private void Update() {
+        TrackFrameTime();
         UpdateSimulationInfoText();
+
     }
+
     //update the info text onthe ui for entity count, number of entities spawned and destroyed, and boundary size
     private void UpdateSimulationInfoText() {
         updateTimer += Time.deltaTime;
 
-        
+
 
         if (updateTimer > updateInterval) {
 
@@ -273,8 +349,17 @@ public class SimulationController : MonoBehaviour {
     #region Update ECS Data Functions
     //clear the simulation
     public void ClearSimulation() {
-
+        spawnerSystem.Enabled = false;
+        spawnerSystem.ClearSpawnQueue();
         clearSimSystem.ClearSimulation();
+
+        StartCoroutine(WaitForAndThen(() => {
+            spawnerSystem.Enabled = true;
+        }, 1f));
+    }
+    private IEnumerator WaitForAndThen(Action action, float time) {
+        yield return new WaitForSeconds(time);
+        action();
     }
 
     //update the ECS boundary component with the new values from the UI changes

@@ -16,8 +16,8 @@ partial struct CreateSingletonSystem : ISystem {
             EntityManager entityManager = state.EntityManager;
             Entity entity = entityManager.CreateEntity();
             entityManager.AddComponentData(entity, new BoundarySettings {
-                boundaryX = 1000,
-                boundaryY = 500,
+                boundaryX = 100,
+                boundaryY = 50,
                 boundaryZ = 1
             });
         }
@@ -34,10 +34,10 @@ partial struct CreateSingletonSystem : ISystem {
                 spawnTwo = false,
                 spawnThree = false,
                 spawnFour = false,
-                spawnRateOne = 20,
-                spawnRateTwo = 20,
-                spawnRateThree = 20,
-                spawnRateFour = 20,
+                spawnRateOne = 5,
+                spawnRateTwo = 5,
+                spawnRateThree = 5,
+                spawnRateFour = 5,
                 minSpawnRate = .1f,
                 maxSpawnRate = 40,
                 maxOfSingleEntityType = 4000,

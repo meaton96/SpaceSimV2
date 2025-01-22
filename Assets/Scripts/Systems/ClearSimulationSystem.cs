@@ -9,6 +9,8 @@ using Unity.Burst;
 [UpdateBefore(typeof(HandleObjectSystem))]
 [BurstCompile]
 public partial class ClearSimulationSystem : SystemBase {
+
+    
     protected override void OnUpdate() {
         
     }
