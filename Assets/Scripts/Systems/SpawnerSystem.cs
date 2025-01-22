@@ -43,7 +43,6 @@ public partial class SpawnerSystem : SystemBase {
         RequireForUpdate<SpawnerConfig>();
         RequireForUpdate<AutoSpawnData>();
         RequireForUpdate<EntityCounterComponent>();
-
         //allocate memory for queue
         spawnQueue = new NativeQueue<int>(Allocator.Persistent);
 
@@ -92,9 +91,7 @@ public partial class SpawnerSystem : SystemBase {
     public void HandleAutoSpawn(float deltaTime) {
         for (int i = 0; i < spawnTimers.Length; i++) {
             if (cachedAutoSpawnData.GetSpawnStatus(i)) {
-                if (!CanSpawn(i)) {
-                    continue;
-                }
+
                 spawnTimers[i] += deltaTime;
 
                 // Calculate how many spawns are needed based on spawnsPerSecond
@@ -124,18 +121,25 @@ public partial class SpawnerSystem : SystemBase {
         int processedCount = 0;
         timer += deltaTime;
         //spawn all entities in the queue up to a maximum per frame
-
+        int[] typesSpawned = new int[4];
+        bool spawnedAny = false;
         while (spawnQueue.Count > 0 && processedCount < MAX_SPAWNS_PER_FRAME) {
 
             int type = spawnQueue.Dequeue();
-
+            
             bool spawned = Spawn(type, commandBuffer);
             if (spawned) {
+                spawnedAny = true;
                 processedCount++;
-                UpdateEntityCounter(type, false, commandBuffer);
+                typesSpawned[type]++;
+                
             }
 
         }
+        if (spawnedAny) {
+            UpdateEntityCounter(typesSpawned, commandBuffer);
+        }
+        
 
 
 
@@ -153,18 +157,21 @@ public partial class SpawnerSystem : SystemBase {
         commandBuffer.Playback(EntityManager);
 
     }
+    //searches for the request duplication component added by the collision system
+    //adds the entity to the spawn queue and disables the request duplication component
+    [BurstCompile]
     public void EnqueueCollisionSpawns(EntityCommandBuffer commandBuffer, float deltaTime) {
         //disable duplication component and add to spawn queue
         int numCollisionDetections = 0;
         foreach (var (entityToSpawn, entity) in
             SystemAPI.Query<RefRO<RequestDuplication>>().WithEntityAccess()) {
 
-            if (CanSpawn(entityToSpawn.ValueRO.index)) {
 
-                numCollisionDetections++;
 
-                spawnQueue.Enqueue(entityToSpawn.ValueRO.index);
-            }
+            numCollisionDetections++;
+
+            spawnQueue.Enqueue(entityToSpawn.ValueRO.index);
+
 
             commandBuffer.SetComponentEnabled<RequestDuplication>(entity, false);
             //break;
@@ -174,12 +181,6 @@ public partial class SpawnerSystem : SystemBase {
     [BurstCompile]
     //spawn an entity based on the index
     public bool Spawn(int index, EntityCommandBuffer commandBuffer) {
-
-        if (!CanSpawn(index)) {
-
-            return false;
-        }
-
 
         bool spawned = false;
 
@@ -222,58 +223,35 @@ public partial class SpawnerSystem : SystemBase {
         return false;
     }
 
-    //check if the number of entities of the specified type is less than the max allowed
-    [BurstCompile]
-    private bool CanSpawn(int index) {
-        if (!cachedAutoSpawnData.limitSpawn) return true;
 
-        var counter = SystemAPI.GetSingleton<EntityCounterComponent>();
-
-
-
-        bool canSpawn = index switch {
-            0 => counter.TypeOneCount < cachedAutoSpawnData.maxOfSingleEntityType,
-            1 => counter.TypeTwoCount < cachedAutoSpawnData.maxOfSingleEntityType,
-            2 => counter.TypeThreeCount < cachedAutoSpawnData.maxOfSingleEntityType,
-            3 => counter.TypeFourCount < cachedAutoSpawnData.maxOfSingleEntityType,
-            _ => false
-        };
-        // Debug.Log($"Type {index} count: {counter.TypeOneCount} < {autoSpawnData.maxOfSingleEntityType}? {canSpawn}");
-
-        return canSpawn;
-
-    }
 
     //update entity counter component
     [BurstCompile]
-    private void UpdateEntityCounter(int index, bool collisionSpawn, EntityCommandBuffer commandBuffer) {
+    private void UpdateEntityCounter(int[] typeAmounts, EntityCommandBuffer commandBuffer) {
 
         Entity entityCounter = SystemAPI.GetSingletonEntity<EntityCounterComponent>();
 
         EntityCounterComponent counter = SystemAPI.GetComponent<EntityCounterComponent>(entityCounter);
-        switch (index) {
-            case 0:
-                counter.TypeOneCount++;
-                break;
-            case 1:
-                counter.TypeTwoCount++;
-                break;
-            case 2:
-                counter.TypeThreeCount++;
-                break;
-            case 3:
-                counter.TypeFourCount++;
-                break;
-            default:
-                break;
+        for (int i = 0; i < typeAmounts.Length; i++) {
+            switch (i) {
+                case 0:
+                    counter.TypeOneCount += typeAmounts[i];
+                    break;
+                case 1:
+                    counter.TypeTwoCount += typeAmounts[i];
+                    break;
+                case 2:
+                    counter.TypeThreeCount += typeAmounts[i];
+                    break;
+                case 3:
+                    counter.TypeFourCount += typeAmounts[i];
+                    break;
+                default:
+                    break;
 
+            }
         }
-        if (collisionSpawn) {
-            counter.totalSpawnedByCollisions++;
-        }
-        else {
-            counter.totalSpawnedBySimulator++;
-        }
+        counter.totalSpawnedBySimulator++;
         commandBuffer.SetComponent(entityCounter, counter);
     }
 
@@ -316,4 +294,6 @@ public partial class SpawnerSystem : SystemBase {
         UpdateBoundarySystem.OnBoundarySettingsChange -= HandleBoundarySettingsChange;
         spawnQueue.Dispose();
     }
+
+    
 }
