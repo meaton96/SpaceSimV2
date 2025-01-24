@@ -32,7 +32,9 @@ public partial class SpawnerSystem : SystemBase {
     private readonly float[] spawnTimers = new float[4];
     private readonly float[] spawnsPerSecond = new float[4];
 
-    private NativeQueue<int> spawnQueue;
+    private bool spawnCollisionsRandomly = true;
+
+    private NativeQueue<(int, bool, float3)> spawnQueue;
 
     float timer;
     float numSpawned;
@@ -44,7 +46,7 @@ public partial class SpawnerSystem : SystemBase {
         RequireForUpdate<AutoSpawnData>();
         RequireForUpdate<EntityCounterComponent>();
         //allocate memory for queue
-        spawnQueue = new NativeQueue<int>(Allocator.Persistent);
+        spawnQueue = new NativeQueue<(int, bool, float3)>(Allocator.Persistent);
 
         //subscribe to the boundary settings change event
         UpdateBoundarySystem.OnBoundarySettingsChange += HandleBoundarySettingsChange;
@@ -60,6 +62,9 @@ public partial class SpawnerSystem : SystemBase {
     //used to clear spawns when the simulation is cleared
     public void ClearSpawnQueue() {
         spawnQueue.Clear();
+    }
+    public void ToggleRandomCollisionSpawns() {
+        spawnCollisionsRandomly = !spawnCollisionsRandomly;
     }
 
     protected override void OnUpdate() {
@@ -101,7 +106,7 @@ public partial class SpawnerSystem : SystemBase {
                 if (spawnsToEnqueue > 0) {
                     for (int j = 0; j < spawnsToEnqueue; j++) {
 
-                        spawnQueue.Enqueue(i);
+                        spawnQueue.Enqueue((i, true, new float3(0, 0, 0)));
                     }
 
                     // Reduce the accumulated timer by the time accounted for spawns
@@ -125,21 +130,27 @@ public partial class SpawnerSystem : SystemBase {
         bool spawnedAny = false;
         while (spawnQueue.Count > 0 && processedCount < MAX_SPAWNS_PER_FRAME) {
 
-            int type = spawnQueue.Dequeue();
-            
-            bool spawned = Spawn(type, commandBuffer);
+            var (type, spawnRandom, spawnLocation) = spawnQueue.Dequeue();
+
+
+
+            bool spawned = spawnCollisionsRandomly ?
+                Spawn(type, commandBuffer, true, spawnLocation) : //force random spawn for collisions
+                Spawn(type, commandBuffer, spawnRandom, spawnLocation); //allow the spawn type to determine location
+
+
             if (spawned) {
                 spawnedAny = true;
                 processedCount++;
                 typesSpawned[type]++;
-                
+
             }
 
         }
         if (spawnedAny) {
             UpdateEntityCounter(typesSpawned, commandBuffer);
         }
-        
+
 
 
 
@@ -170,7 +181,12 @@ public partial class SpawnerSystem : SystemBase {
 
             numCollisionDetections++;
 
-            spawnQueue.Enqueue(entityToSpawn.ValueRO.index);
+            //enqueue a spawn request marked as a collision spawn
+            spawnQueue.Enqueue((
+                entityToSpawn.ValueRO.index,
+                false,
+                entityToSpawn.ValueRO.collisionLocation
+                ));
 
 
             commandBuffer.SetComponentEnabled<RequestDuplication>(entity, false);
@@ -180,7 +196,7 @@ public partial class SpawnerSystem : SystemBase {
     }
     [BurstCompile]
     //spawn an entity based on the index
-    public bool Spawn(int index, EntityCommandBuffer commandBuffer) {
+    public bool Spawn(int index, EntityCommandBuffer commandBuffer, bool spawnRandom = true, float3 spawnLocation = default) {
 
         bool spawned = false;
 
@@ -188,25 +204,25 @@ public partial class SpawnerSystem : SystemBase {
             case 0:
 
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerOneComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 1f, spawnRandom, spawnLocation);
                     spawned = true;
                 }
                 break;
             case 1:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerTwoComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 4f);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 4f, spawnRandom, spawnLocation);
                     spawned = true;
                 }
                 break;
             case 2:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerThreeComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 2f);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 2f, spawnRandom, spawnLocation);
                     spawned = true;
                 }
                 break;
             case 3:
                 foreach (var spawnerComponent in SystemAPI.Query<RefRO<SpawnerConfig>>().WithAny<SpawnerFourComponent>()) {
-                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 1.5f);
+                    SpawnEntity(spawnerComponent.ValueRO.spawnPrefab, commandBuffer, 1.5f, spawnRandom, spawnLocation);
                     spawned = true;
                 }
                 break;
@@ -257,7 +273,7 @@ public partial class SpawnerSystem : SystemBase {
 
     //spawns the passed in entity using the provided command buffer
     [BurstCompile]
-    private void SpawnEntity(Entity entity, EntityCommandBuffer commandBuffer, float scale = 1f) {
+    private void SpawnEntity(Entity entity, EntityCommandBuffer commandBuffer, float scale = 1f, bool spawnRandom = true, float3 location = default) {
 
         float maxVelocity = cachedAutoSpawnData.velocityMax;
         float minVelocity = maxVelocity * .4f;
@@ -269,11 +285,14 @@ public partial class SpawnerSystem : SystemBase {
             )) * UnityEngine.Random.Range(minVelocity, maxVelocity);
 
         //set the position of the spawned entity to a random position
-        float3 randomPosition = new float3(
+
+        float3 spawnPos = spawnRandom ?
+        new float3(
             UnityEngine.Random.Range(-cachedBounds.boundaryX, cachedBounds.boundaryX),
             UnityEngine.Random.Range(-cachedBounds.boundaryY, cachedBounds.boundaryY),
             0f
-        );
+        ) :
+        location;
 
 
 
@@ -281,7 +300,7 @@ public partial class SpawnerSystem : SystemBase {
         Entity _entity = commandBuffer.Instantiate(entity);
 
         commandBuffer.SetComponent(_entity, new LocalTransform {
-            Position = randomPosition,
+            Position = spawnPos,
             Rotation = quaternion.identity,
             Scale = scale
         });
@@ -295,5 +314,5 @@ public partial class SpawnerSystem : SystemBase {
         spawnQueue.Dispose();
     }
 
-    
+
 }

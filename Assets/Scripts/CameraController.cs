@@ -103,7 +103,6 @@ public class CameraController : MonoBehaviour {
         }
         
         Vector2 delta = panAction.ReadValue<Vector2>();
-        Debug.Log(delta.sqrMagnitude);
         if (delta.sqrMagnitude > 0.001f) {
 
             float adjustedPanSpeed = panSpeed * Mathf.Max(1f, zoomFactor);

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
+using Unity.Mathematics;
 
 public class RequestDuplicationAuthoring : MonoBehaviour {
     public class Baker : Baker<RequestDuplicationAuthoring> {
@@ -14,4 +15,5 @@ public class RequestDuplicationAuthoring : MonoBehaviour {
 }
 public struct RequestDuplication : IComponentData, IEnableableComponent {
     public int index;
+    public float3 collisionLocation;
 }

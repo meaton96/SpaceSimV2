@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Physics;
 using Unity.Physics.Stateful;
 using Unity.Physics.Systems;
+using Unity.Transforms;
 
 //Handles reading of the stateful collision buffer component provided by Unity.Physics.Stateful
 //marks entities for destruction or duplication based on collision type
@@ -17,7 +18,18 @@ public partial struct CollisionEventsSystem : ISystem {
         var entityManager = state.EntityManager;
 
         // Query entities with a StatefulCollisionEvent buffer
-        foreach (var (physVelocity, physMass, buffer, entity) in SystemAPI.Query<PhysicsVelocity, PhysicsMass, DynamicBuffer<StatefulCollisionEvent>>().WithEntityAccess()) {
+        foreach (var (
+            localTransform,
+            physVelocity, 
+            physMass, 
+            buffer, 
+            entity) in 
+            SystemAPI.Query<
+                LocalTransform,
+                PhysicsVelocity, 
+                PhysicsMass, 
+                DynamicBuffer<StatefulCollisionEvent>
+                >().WithEntityAccess()) {
 
             foreach (var collisionEvent in buffer) {
                 // Check collision state (Enter, Stay, Exit)
@@ -37,7 +49,10 @@ public partial struct CollisionEventsSystem : ISystem {
 
                                 //mark one of them to duplicate (picked up by spawner system)
                                 entityManager.SetComponentEnabled<RequestDuplication>(entity, true);
-                                entityManager.SetComponentData(entity, new RequestDuplication { index = (int)typeA });
+                                entityManager.SetComponentData(entity, new RequestDuplication { 
+                                    index = (int)typeA,
+                                    collisionLocation = localTransform.Position
+                                });
 
                                 entityManager.SetComponentEnabled<Collided>(otherEntity, true);
                                 entityManager.SetComponentData(otherEntity, new Collided { otherEntity = entity });

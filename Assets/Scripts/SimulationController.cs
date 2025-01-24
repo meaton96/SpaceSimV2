@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.UI;
 
 //represents a size setting of the simulation
 public struct SimulationSize {
@@ -92,6 +93,7 @@ public class SimulationController : MonoBehaviour {
     [SerializeField] private float updateInterval = .02f;
     [SerializeField] private Interface pcInterface;
     [SerializeField] private Interface mobileInterface;
+    [SerializeField] private Toggle randomCollisionToggle;
     public static bool IsMobile => Application.isMobilePlatform;
 
 
@@ -205,6 +207,11 @@ public class SimulationController : MonoBehaviour {
             pcInterface.gameObject.SetActive(true);
             mobileInterface.gameObject.SetActive(false);
         }
+
+        //add listener for random collision toggle
+        randomCollisionToggle.onValueChanged.AddListener(isOn => {
+            spawnerSystem.ToggleRandomCollisionSpawns();
+        });
 
     }
     #endregion
