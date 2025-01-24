@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -37,7 +38,7 @@ public class SimulationController : MonoBehaviour {
     #region Simulation Data
 
 
-
+    
     private float numDestroyed;
     private int destroyedSmoothingFrames = 60;
     private Queue<float> numDestroyedPerFrame = new Queue<float>();
@@ -45,6 +46,10 @@ public class SimulationController : MonoBehaviour {
     private bool isPaused = false;
     public readonly bool[] spawnFlags = new bool[4];
     public readonly float[] spawnRates = new float[4];
+
+    //stores the sizes of the simulation
+    //ideally this would be a file or scriptable asset asset maybe
+    //the initial size should also be set in CreateSingletonSystem.cs which is not great
     public readonly List<SimulationSize> simulationSizes = new List<SimulationSize>() {
         new SimulationSize {
             width = 100,
@@ -86,34 +91,8 @@ public class SimulationController : MonoBehaviour {
     [SerializeField] private float updateInterval = .02f;
     [SerializeField] private Interface pcInterface;
     [SerializeField] private Interface mobileInterface;
-    private bool isMobile = false;
-    //[SerializeField]
-    //private TextMeshProUGUI frameTimeWarningText;
-    //[SerializeField]
-    //private TextMeshProUGUI pauseButtonText;
-    //[SerializeField]
-    //private GameObject crashMessageParent;
-    //[SerializeField]
-    //private TextMeshProUGUI entityCountText;
-    //[SerializeField]
-    //private TextMeshProUGUI entitySpawnDestroyText;
-    //[SerializeField]
-    //private TextMeshProUGUI boundarySizeText;
+    private bool isMobile =>  Application.isMobilePlatform;
 
-    //[SerializeField]
-    //private Slider[] sliders = new Slider[4];
-
-    //[SerializeField]
-    //private Toggle[] sizeRadios = new Toggle[4];
-
-    //[SerializeField]
-    //private TextMeshProUGUI[] spawnRateTexts = new TextMeshProUGUI[4];
-
-
-    //[SerializeField]
-    //private TextMeshProUGUI velocityText;
-    //[SerializeField]
-    //private Slider velocitySlider;
 
 
     #endregion
@@ -217,6 +196,17 @@ public class SimulationController : MonoBehaviour {
         //add listener to velocity slider
         velSlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
 
+        //add listener for toggle stats
+        if (isMobile) {
+            mobileInterface.toggleStats.onValueChanged.AddListener(val => mobileInterface.statsTextParent.SetActive(val));
+            mobileInterface.gameObject.SetActive(true);
+            pcInterface.gameObject.SetActive(false);
+        }
+        else {
+            pcInterface.gameObject.SetActive(true);
+            mobileInterface.gameObject.SetActive(false);
+        }
+
     }
     #endregion
 
@@ -285,7 +275,7 @@ public class SimulationController : MonoBehaviour {
         UpdateSimulationInfoText();
 
     }
-
+    
 
 
     //update the info text onthe ui for entity count, number of entities spawned and destroyed, and boundary size
