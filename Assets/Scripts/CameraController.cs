@@ -1,7 +1,6 @@
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.EnhancedTouch;
+using UnityEngine.UI;
 
 public class CameraController : MonoBehaviour {
 
@@ -14,13 +13,17 @@ public class CameraController : MonoBehaviour {
     [Header("Zoom Settings")]
     public float zoomSpeed = 10f;      
     public float minZoomDistance = -70f; 
-    public float maxZoomDistance = -875; 
-
-    [Header("Pan Settings")]
-    public float panSpeed = 0.1f;      
-   // public KeyCode panKey = KeyCode.Mouse1;
-
+    public float maxZoomDistance = -875;
     [SerializeField] private float zoomFactor;
+    [Header("Pan Settings")]
+    public float panSpeed = 0.1f;
+
+    [Header("Mobile Slider")]
+    [SerializeField] private Slider zoomSlider;
+
+    private bool isMobile => SimulationController.IsMobile;
+
+
     private Vector3 lastPointerPos;
     private void Awake() {
         if (!Mouse.current.enabled) {
@@ -29,18 +32,19 @@ public class CameraController : MonoBehaviour {
         }
     }
     private void Start() {
-        EnhancedTouchSupport.Enable();
         var playerMap = inputActions.FindActionMap("Player");
         zoomAction = playerMap.FindAction("Zoom");
         zoomAction?.Enable();
         panAction?.Enable();
         lastPointerPos = Vector3.zero;
-        //zoomAction.performed += ctx => {
-        //    Vector2 scrollDelta = ctx.ReadValue<Vector2>();
-        //    Debug.Log($"Scroll wheel delta: {scrollDelta}");
-        //};
 
         panAction = playerMap.FindAction("Pan");
+
+
+        if (isMobile) {
+            zoomSlider.value = (transform.position.z - minZoomDistance) / (maxZoomDistance - minZoomDistance);
+            zoomSlider.onValueChanged.AddListener(val => HandleMobileZoom(val));
+        }
     }
     private void OnDisable() {
         zoomAction?.Disable();
@@ -48,9 +52,22 @@ public class CameraController : MonoBehaviour {
     }
 
     void Update() {
-        HandleZoom();
         HandlePan();
+        if (isMobile) {
+            return;
+        }
+        HandleZoom();
+        
     }
+
+    private void HandleMobileZoom(float sliderValue) {
+
+        float cameraPosition = Mathf.Lerp(minZoomDistance, maxZoomDistance, sliderValue);
+        transform.position = new Vector3(transform.position.x, transform.position.y, cameraPosition);
+        zoomFactor = sliderValue * 10;
+
+    }
+    
     //Handle Zoom input from mouse scroll wheel
     private void HandleZoom() {
         Vector2 scrollInput = zoomAction.ReadValue<Vector2>();
@@ -78,7 +95,7 @@ public class CameraController : MonoBehaviour {
         }
         
         Vector2 delta = panAction.ReadValue<Vector2>();
-       // Debug.Log(delta.sqrMagnitude);
+        Debug.Log(delta.sqrMagnitude);
         if (delta.sqrMagnitude > 0.001f) {
 
             float adjustedPanSpeed = panSpeed * Mathf.Max(1f, zoomFactor);
@@ -89,29 +106,5 @@ public class CameraController : MonoBehaviour {
             transform.Translate(panDirection, Space.Self);
         }
     }
-    // Basic pinch logic using EnhancedTouch for multiple touches
-    private void HandlePinch() {
-        var activeTouches = UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches;
-        if (activeTouches.Count < 2)
-            return; 
-
-        
-        var touch0 = activeTouches[0];
-        var touch1 = activeTouches[1];
-
-        float currentDist = Vector2.Distance(touch0.screenPosition, touch1.screenPosition);
-
-        Vector2 prevPos0 = touch0.screenPosition - touch0.delta;
-        Vector2 prevPos1 = touch1.screenPosition - touch1.delta;
-        float prevDist = Vector2.Distance(prevPos0, prevPos1);
-
-        float pinchDelta = currentDist - prevDist;
-
-        if (Mathf.Abs(pinchDelta) > 0.001f) {
-            Vector3 direction = transform.forward * (pinchDelta * 0.01f) * zoomSpeed * Time.deltaTime;
-            Vector3 newPosition = transform.position + direction;
-            newPosition.z = Mathf.Clamp(newPosition.z, maxZoomDistance, minZoomDistance);
-            transform.position = newPosition;
-        }
-    }
+    
 }

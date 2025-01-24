@@ -91,7 +91,7 @@ public class SimulationController : MonoBehaviour {
     [SerializeField] private float updateInterval = .02f;
     [SerializeField] private Interface pcInterface;
     [SerializeField] private Interface mobileInterface;
-    private bool isMobile =>  Application.isMobilePlatform;
+    public static bool IsMobile => Application.isMobilePlatform;
 
 
 
@@ -154,20 +154,20 @@ public class SimulationController : MonoBehaviour {
         // Initialize UI elements
         for (int i = 0; i < 4; i++) {
 
-            var slider = isMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
+            var slider = IsMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
 
             slider.value = spawnRates[i];
             slider.minValue = minSpawnRate;
             slider.maxValue = maxSpawnRate;
 
-            var spawnRateText = isMobile ? mobileInterface.spawnRateTexts[i] : pcInterface.spawnRateTexts[i];
+            var spawnRateText = IsMobile ? mobileInterface.spawnRateTexts[i] : pcInterface.spawnRateTexts[i];
 
             spawnRateText.text = spawnRates[i].ToString();
 
             //add listeners to radio toggle buttons
             int index = i;
 
-            var sizeRadio = isMobile ? mobileInterface.sizeRadios[i] : pcInterface.sizeRadios[i];
+            var sizeRadio = IsMobile ? mobileInterface.sizeRadios[i] : pcInterface.sizeRadios[i];
 
             sizeRadio.onValueChanged.AddListener(isOn => {
                 if (isOn) {
@@ -184,20 +184,20 @@ public class SimulationController : MonoBehaviour {
         for (int i = 0; i < 4; i++) {
             int index = i;
 
-            var slider = isMobile ? mobileInterface.sliders[index] : pcInterface.sliders[index];
-            var spawnRateText = isMobile ? mobileInterface.spawnRateTexts[index] : pcInterface.spawnRateTexts[index];
+            var slider = IsMobile ? mobileInterface.sliders[index] : pcInterface.sliders[index];
+            var spawnRateText = IsMobile ? mobileInterface.spawnRateTexts[index] : pcInterface.spawnRateTexts[index];
             slider.onValueChanged.AddListener(value => {
                 spawnRates[index] = value;
                 spawnRateText.text = value.ToString();
                 UpdateAutoSpawnData();
             });
         }
-        var velSlider = isMobile ? mobileInterface.velocitySlider : pcInterface.velocitySlider;
+        var velSlider = IsMobile ? mobileInterface.velocitySlider : pcInterface.velocitySlider;
         //add listener to velocity slider
         velSlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
 
         //add listener for toggle stats
-        if (isMobile) {
+        if (IsMobile) {
             mobileInterface.toggleStats.onValueChanged.AddListener(val => mobileInterface.statsTextParent.SetActive(val));
             mobileInterface.gameObject.SetActive(true);
             pcInterface.gameObject.SetActive(false);
@@ -226,7 +226,7 @@ public class SimulationController : MonoBehaviour {
             if (averageFrameTime > 1 / pauseFramerate) {
                 HandleEmergencyPause();
             }
-            var frameTimeText = isMobile ? mobileInterface.frameTimeWarningText : pcInterface.frameTimeWarningText;
+            var frameTimeText = IsMobile ? mobileInterface.frameTimeWarningText : pcInterface.frameTimeWarningText;
             if (averageFrameTime > 1 / warningFramerate) {
 
                 frameTimeText.gameObject.SetActive(true);
@@ -243,14 +243,14 @@ public class SimulationController : MonoBehaviour {
     #region Pause
     //handle pausing the simulation to avoid crashing the game
     private void HandleEmergencyPause() {
-        var messageParent = isMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
+        var messageParent = IsMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
         messageParent.SetActive(true);
         HandlePause();
     }
     public void HandleEmergencySimulationClear() {
         HandlePause();
         ClearSimulation();
-        var messageParent = isMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
+        var messageParent = IsMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
         messageParent.SetActive(false);
 
     }
@@ -259,7 +259,7 @@ public class SimulationController : MonoBehaviour {
         isPaused = !isPaused;
         var simulationGroup = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SimulationSystemGroup>();
         simulationGroup.Enabled = !isPaused;
-        var pauseButtonText = isMobile ? mobileInterface.pauseButtonText : pcInterface.pauseButtonText;
+        var pauseButtonText = IsMobile ? mobileInterface.pauseButtonText : pcInterface.pauseButtonText;
         pauseButtonText.text = isPaused ? "Resume" : "Pause";
         Time.timeScale = isPaused ? 0 : 1;
 
@@ -300,14 +300,14 @@ public class SimulationController : MonoBehaviour {
             float smoothedDestroyRate = numDestroyedPerFrame.Average();
             numDestroyed = counterComponent.totalDestroyed;
 
-            var updateText = isMobile ? mobileInterface.entityCountText : pcInterface.entityCountText;
+            var updateText = IsMobile ? mobileInterface.entityCountText : pcInterface.entityCountText;
 
             updateText.text = $"Object 1: {counterComponent.TypeOneCount}\n" +
                                    $"Object 2: {counterComponent.TypeTwoCount}\n" +
                                    $"Object 3: {counterComponent.TypeThreeCount}\n" +
                                    $"Object 4: {counterComponent.TypeFourCount}\n";
 
-            updateText = isMobile ? mobileInterface.entitySpawnDestroyText : pcInterface.entitySpawnDestroyText;
+            updateText = IsMobile ? mobileInterface.entitySpawnDestroyText : pcInterface.entitySpawnDestroyText;
 
             updateText.text = $"Spawns: {counterComponent.totalSpawnedBySimulator}\n " +
                                           $"/sec: {Mathf.Ceil(spawnRate)}\n" +
@@ -316,7 +316,7 @@ public class SimulationController : MonoBehaviour {
 
             var simulationSize = simulationSizes[currentSimulationSizeIndex];
 
-            updateText = isMobile ? mobileInterface.boundarySizeText : pcInterface.boundarySizeText;
+            updateText = IsMobile ? mobileInterface.boundarySizeText : pcInterface.boundarySizeText;
 
             updateText.text = $"Width: {simulationSize.width}\n" +
                                     $"Height: {simulationSize.height}\n" +
@@ -328,7 +328,7 @@ public class SimulationController : MonoBehaviour {
     //handle changing the velocity slider
     public void HandleVelocitySliderChange(float value) {
         maxVelocity = value;
-        var updateText = isMobile ? mobileInterface.velocityText : pcInterface.velocityText;
+        var updateText = IsMobile ? mobileInterface.velocityText : pcInterface.velocityText;
         updateText.text = $"{maxVelocity} m/s";
         UpdateAutoSpawnData();
     }
@@ -345,7 +345,7 @@ public class SimulationController : MonoBehaviour {
             // Deselect all other toggles
             for (int i = 0; i < 4; i++) {
                 if (i != index) {
-                    if (isMobile) {
+                    if (IsMobile) {
                         mobileInterface.sizeRadios[i].SetIsOnWithoutNotify(false);
                     }
                     else {
@@ -360,7 +360,7 @@ public class SimulationController : MonoBehaviour {
     private void UpdateSliderMax() {
         for (int i = 0; i < 4; i++) {
             float maxRate = simulationSizes[currentSimulationSizeIndex].maxSpawnRate;
-            var slider = isMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
+            var slider = IsMobile ? mobileInterface.sliders[i] : pcInterface.sliders[i];
             slider.maxValue = maxRate;
             if (slider.value > maxRate)
                 slider.value = maxRate;

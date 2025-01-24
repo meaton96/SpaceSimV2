@@ -504,6 +504,17 @@
                 },
                 {
                     "name": "",
+                    "id": "773ce73f-dc7b-4a55-b4cd-cb5e0a32ed82",
+                    "path": "<Touchscreen>/primaryTouch/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Mobile",
+                    "action": "Pan",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "5fc224d4-9529-4ce7-876c-880cb4615a30",
                     "path": "<Mouse>/scroll",
                     "interactions": "",
