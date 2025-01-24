@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class CameraController : MonoBehaviour {
 
@@ -25,12 +26,14 @@ public class CameraController : MonoBehaviour {
 
 
     private Vector3 lastPointerPos;
+    //for editor testing since mouse is disabled by default with mobile build preferences?
     private void Awake() {
         if (!Mouse.current.enabled) {
             InputSystem.EnableDevice(Mouse.current);
             Debug.Log("Mouse enabled.");
         }
     }
+    //setup input actions and mobile zoom slider
     private void Start() {
         var playerMap = inputActions.FindActionMap("Player");
         zoomAction = playerMap.FindAction("Zoom");
@@ -51,6 +54,7 @@ public class CameraController : MonoBehaviour {
         panAction?.Disable();
     }
 
+    //Handle Pan and Zoom input
     void Update() {
         HandlePan();
         if (isMobile) {
@@ -59,7 +63,7 @@ public class CameraController : MonoBehaviour {
         HandleZoom();
         
     }
-
+    //Handle Zoom input from mobile slider
     private void HandleMobileZoom(float sliderValue) {
 
         float cameraPosition = Mathf.Lerp(minZoomDistance, maxZoomDistance, sliderValue);
@@ -85,8 +89,12 @@ public class CameraController : MonoBehaviour {
         zoomFactor = (transform.position.z - minZoomDistance) / (maxZoomDistance - minZoomDistance) * 10;
     }
 
-
+    //pan the camera, uses the zoom factor to increase pan speed at farther out zoom levels
+    //doesnt make any attempts to keep the camera in bounds currently
     private void HandlePan() {
+        if (IsPointerOverUIElement()) {
+            return;
+        }
         //if windows
         if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor) {
             if (!Mouse.current.leftButton.isPressed) {
@@ -106,5 +114,13 @@ public class CameraController : MonoBehaviour {
             transform.Translate(panDirection, Space.Self);
         }
     }
-    
+    //check if the pointer is over a UI element
+    private bool IsPointerOverUIElement() {
+        if (EventSystem.current == null) {
+            return false; 
+        }
+        return EventSystem.current.IsPointerOverGameObject() ||
+               (Touchscreen.current != null && EventSystem.current.IsPointerOverGameObject(Touchscreen.current.primaryTouch.touchId.ReadValue()));
+    }
+
 }

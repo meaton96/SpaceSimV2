@@ -2,12 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.UI;
+
+//represents a size setting of the simulation
 public struct SimulationSize {
     public float width;
     public float height;
@@ -19,6 +17,9 @@ public struct SimulationSize {
         return $"{name} - Width: {width} Height: {height} Depth: {depth} MaxSpawnRate: {maxSpawnRate}";
     }
 }
+//handles UI input and passes it through to ECS systems
+//Also handles pulling data from ECS systems and updating the UI
+//Contains logic for preventing simulation crashes and pausing the simulation
 public class SimulationController : MonoBehaviour {
     public static SimulationController Instance { get; private set; }
 
@@ -112,12 +113,11 @@ public class SimulationController : MonoBehaviour {
     private void Awake() {
         Instance = this;
     }
-
-    // Start is called before the first frame update
     void Start() {
         Init();
     }
     public void Init() {
+        //get ECS systems
         spawnerSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SpawnerSystem>();
         clearSimSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<ClearSimulationSystem>();
         entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -133,6 +133,7 @@ public class SimulationController : MonoBehaviour {
         //get initial spawn data
         var spawnData = entityManager.GetComponentData<AutoSpawnData>(spawnDataEntity);
 
+        //set local spawn data
         spawnFlags[0] = spawnData.spawnOne;
         spawnFlags[1] = spawnData.spawnTwo;
         spawnFlags[2] = spawnData.spawnThree;
@@ -142,9 +143,6 @@ public class SimulationController : MonoBehaviour {
         spawnRates[1] = spawnData.spawnRateTwo;
         spawnRates[2] = spawnData.spawnRateThree;
         spawnRates[3] = spawnData.spawnRateFour;
-
-        //maxOfSingleEntityType = spawnData.maxOfSingleEntityType;
-
 
         float minSpawnRate = spawnData.minSpawnRate;
         float maxSpawnRate = spawnData.maxSpawnRate;
@@ -193,6 +191,7 @@ public class SimulationController : MonoBehaviour {
             });
         }
         var velSlider = IsMobile ? mobileInterface.velocitySlider : pcInterface.velocitySlider;
+
         //add listener to velocity slider
         velSlider.onValueChanged.AddListener(value => HandleVelocitySliderChange(value));
 
@@ -211,12 +210,14 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Frametime Tracking
+    //track the time between frames and pause the simulation if it gets too slow
+    //aims for as a target (mobile), warns at 15 fps, pauses the simulation at 10 fps
     private void TrackFrameTime() {
-        //  Debug.Log(Time.deltaTime);
         if (waitTimer < waitTime) {
             waitTimer += Time.deltaTime;
         }
         else {
+            //smooth frame rate over the past 10 frames
             if (frameTimes.Count > smoothingFrames) {
                 frameTimes.Dequeue();
             }
@@ -241,12 +242,13 @@ public class SimulationController : MonoBehaviour {
     #endregion
 
     #region Pause
-    //handle pausing the simulation to avoid crashing the game
+    //handle pausing the simulation to avoid crashing the simulation
     private void HandleEmergencyPause() {
         var messageParent = IsMobile ? mobileInterface.crashMessageParent : pcInterface.crashMessageParent;
         messageParent.SetActive(true);
         HandlePause();
     }
+    //used by the UI button to clear the simulation and restart it
     public void HandleEmergencySimulationClear() {
         HandlePause();
         ClearSimulation();
@@ -285,7 +287,7 @@ public class SimulationController : MonoBehaviour {
 
 
         if (updateTimer > updateInterval) {
-
+            
             EntityCounterComponent counterComponent = entityManager.GetComponentData<EntityCounterComponent>(counterEntity);
             SpawnRateData spawnRateComponent = entityManager.GetComponentData<SpawnRateData>(spawnRateEntity);
             float spawnRate = spawnRateComponent.currentSpawnRate;
@@ -370,7 +372,10 @@ public class SimulationController : MonoBehaviour {
 
     #region Update ECS Data Functions
     //clear the simulation
+    //I disable the spawner system here for 1 second and manually tell it to clear its spawn queue
+    //then re-enable the spawner after 1 second
     public void ClearSimulation() {
+        
         spawnerSystem.Enabled = false;
         spawnerSystem.ClearSpawnQueue();
         clearSimSystem.ClearSimulation();
