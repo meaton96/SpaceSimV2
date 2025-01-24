@@ -1,5 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Stateful;
 using Unity.Physics.Systems;
@@ -49,9 +50,22 @@ public partial struct CollisionEventsSystem : ISystem {
 
                                 //mark one of them to duplicate (picked up by spawner system)
                                 entityManager.SetComponentEnabled<RequestDuplication>(entity, true);
+
+                                float3 up = new float3(0, 1, 0);
+                                //find a nearby position 
+                                if (math.abs(math.dot(up, collisionEvent.Normal)) > .99f) {
+                                    up = new float3(1, 0, 0);
+                                }
+                                float3 orthogonal = math.normalize(math.cross(collisionEvent.Normal, up));
+
+                                float3 newEntitySpawnLocation = 
+                                    localTransform.Position + 
+                                    orthogonal * 10 +
+                                    collisionEvent.Normal * 10;
+
                                 entityManager.SetComponentData(entity, new RequestDuplication { 
                                     index = (int)typeA,
-                                    collisionLocation = localTransform.Position
+                                    collisionLocation = newEntitySpawnLocation
                                 });
 
                                 entityManager.SetComponentEnabled<Collided>(otherEntity, true);
