@@ -6,11 +6,17 @@ I built a fairly simple “space” simulation that uses Unity DOTS and Havok Ph
 
 The Simulation runs on mobile and PC with various options for controls. The user can toggle on/off spawning of each entity type as well as controlling the rate at which the entities spawn. They can also pause or clear the simulation at any time, adjust the simulation size which changes the boundaries of the simulation to allow the user to simulate more objects, and change the initial velocity given to the entities on spawn.
 
+## Controls
 PC/Mobile: mouse/touch and drag to move the camera
 
 PC: Scroll zoom camera
 
 Mobile: Slider zoom camera
+
+- Velocity slider: change initial velocity of objects on spawn - faster objects - more collisions, more work for phyiscs system so supports less number of entities at higher speeds.
+- Spawners: Toggle auto spawning of each object type. Slider controls the number of objects to spawn in number per second
+- Random Collision Spawn Toggle: See below about random collision spawns vs local spawns, this option changes that setting
+---
 
 The number of objects able to be simulated depends on the size of the boundaries and the initial velocity (faster objects more collision, more stress on physics engine) 
 
